@@ -45,6 +45,10 @@ button { font: inherit; color: inherit; cursor: pointer }
 .inds input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); flex: none; margin: 0 }
 .inds input[type="range"] { grid-column: 1; width: 100%; accent-color: var(--accent); margin: 2px 0 0; height: 24px }
 .inds input[type="range"]:disabled { opacity: .35 }
+/* Sentido do indicador (só no modo CSV): linha própria sob o peso, mesma família visual dos botões de preset */
+.inds select.dir { grid-column: 1; justify-self: start; max-width: 100%; font: inherit; font-size: 13px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 4px 8px; min-height: 32px; margin-top: 2px; cursor: pointer }
+.inds select.dir:hover:not(:disabled) { border-color: var(--accent) }
+.inds select.dir:disabled { opacity: .35; cursor: default }
 .inds .pct { grid-row: 1 / span 2; grid-column: 2; text-align: right; font-size: 13px; color: var(--muted) }
 .inds li.on .pct { color: var(--ink); font-weight: 500 }
 .hint { font-size: 13px; color: var(--muted); margin: 0 }
@@ -102,7 +106,7 @@ svg#svg { display: block; width: 100%; height: auto; touch-action: manipulation 
   .wrap { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "map" "pick" "crit" "rank" "note"; grid-template-rows: none }
   h1 { font-size: 21px }
   .panel { padding: 12px }
-  .inds label { min-height: 36px } .inds input[type="range"] { height: 32px }
+  .inds label { min-height: 36px } .inds input[type="range"] { height: 32px } .inds select.dir { min-height: 40px }
   #lista button { min-height: 44px }
 }
 </style>
@@ -173,9 +177,9 @@ svg#svg { display: block; width: 100%; height: auto; touch-action: manipulation 
 
   <section class="panel" id="nota">
     <h2>Como o número é calculado</h2>
-    <p>Cada município é comparado com os outros <span id="nm1">644</span> em cada indicador marcado. Quem tem o valor maior vence a comparação (função de preferência usual, todos os indicadores de maximização). Φ+ é a fração ponderada de comparações vencidas, Φ− a de comparações perdidas, e o fluxo líquido Φ = Φ+ − Φ− ordena o ranking. Empates não contam para nenhum lado.</p>
+    <p>Cada município é comparado com os outros <span id="nm1">644</span> em cada indicador marcado. Quem tem o valor melhor vence a comparação (função de preferência usual; nos indicadores do ISDEL, valor maior é melhor). Φ+ é a fração ponderada de comparações vencidas, Φ− a de comparações perdidas, e o fluxo líquido Φ = Φ+ − Φ− ordena o ranking. Empates não contam para nenhum lado.</p>
     <p id="notadados">Dados: indicadores do ISDEL (Sebrae) da planilha usada na disciplina, 645 municípios, escala de 0 a 1. Malha municipal e mesorregiões: IBGE. Sem mapa de fundo: os contornos são desenhados na própria página.</p>
-    <p>Modo CSV: o arquivo precisa ter o código IBGE de 7 dígitos ou o nome do município e uma coluna numérica por indicador, com separador vírgula, ou ponto e vírgula com vírgula decimal. Municípios que não estão no arquivo ficam em cinza e fora do ranking. Todo indicador é tratado como "quanto maior, melhor".</p>
+    <p>Modo CSV: o arquivo precisa ter o código IBGE de 7 dígitos ou o nome do município e uma coluna numérica por indicador, com separador vírgula, ou ponto e vírgula com vírgula decimal. Municípios que não estão no arquivo ficam em cinza e fora do ranking. Cada indicador começa como "quanto maior, melhor"; ao lado de cada um você escolhe "menor é melhor" quando o valor baixo for o desejável.</p>
   </section>
 </div>
 
@@ -191,11 +195,11 @@ svg#svg { display: block; width: 100%; height: auto; touch-action: manipulation 
   var sgn = function (x) { return (x > 0 ? '+' : '') + fmt(x, 3); };
 
   // Colunas ordenadas uma vez: contar quem está abaixo e acima vira busca binária
-  var SORTED;
+  var SORTED, DIR;  // DIR[k] = 1 (maior é melhor) ou -1 (menor é melhor); SORTED guarda DIR[k] * valor
+  function sortCol(k) { return MUN.map(function (m) { return DIR[k] * m.v[k]; }).sort(function (a, b) { return a - b; }); }
   function bound(arr, v, upper) { var lo = 0, hi = arr.length; while (lo < hi) { var mid = (lo + hi) >> 1; if (arr[mid] < v || (upper && arr[mid] === v)) lo = mid + 1; else hi = mid; } return lo; }
 
   // PROMETHEE II, função usual: P_k(a_i, a_j) = 1 se f_k(a_i) > f_k(a_j)
-  // ponytail: todo indicador é maximização; seletor de sentido por coluna se alguém precisar de "menor é melhor"
   function promethee(weights) {
     var total = weights.reduce(function (s, w) { return s + w; }, 0);
     if (!total) return null;
@@ -204,7 +208,7 @@ svg#svg { display: block; width: 100%; height: auto; touch-action: manipulation 
       if (!w) return;
       var wk = w / total / (N - 1), col = SORTED[k];
       for (var i = 0; i < N; i++) {
-        var v = MUN[i].v[k];
+        var v = DIR[k] * MUN[i].v[k];
         pp[i] += wk * bound(col, v, false);        // quantos i vence
         pn[i] += wk * (N - bound(col, v, true));   // quantos vencem i
       }
@@ -247,7 +251,8 @@ svg#svg { display: block; width: 100%; height: auto; touch-action: manipulation 
     IND = ind; MUN = mun; N = MUN.length; K = IND.length;
     PRESETS = csv ? { csv: [0, 1, 2].filter(function (k) { return k < K; }) }
       : { a: [0, 2, 5], b: [0, 2, 6], todos: IND.map(function (_, k) { return k; }) };
-    SORTED = IND.map(function (_, k) { return MUN.map(function (m) { return m.v[k]; }).sort(function (a, b) { return a - b; }); });
+    DIR = IND.map(function () { return 1; });  // sentidos voltam ao padrão a cada carga
+    SORTED = IND.map(function (_, k) { return sortCol(k); });
     var on = {};
     paths = MUN.map(function (m, i) { on[m.c] = 1; byCode[m.c].setAttribute('data-i', i); return byCode[m.c]; });
     Object.keys(byCode).forEach(function (c) {
@@ -261,7 +266,8 @@ svg#svg { display: block; width: 100%; height: auto; touch-action: manipulation 
     $('inds').innerHTML = IND.map(function (name, k) {
       return '<li><label for="c' + k + '"><input type="checkbox" id="c' + k + '"><span>' + esc(name) + '</span></label>' +
         '<input type="range" id="w' + k + '" min="0" max="10" step="1" value="5" aria-label="Peso de ' + esc(name) + '">' +
-        '<span class="pct num" id="p' + k + '"></span></li>';
+        '<span class="pct num" id="p' + k + '"></span>' +
+        (csv ? '<select class="dir" id="d' + k + '" data-k="' + k + '" aria-label="Sentido de ' + esc(name) + '"><option value="1">maior é melhor</option><option value="-1">menor é melhor</option></select>' : '') + '</li>';
     }).join('');
     picked = MUN.findIndex(function (m) { return m.n === 'Limeira'; });  // Limeira: sede da FCA Unicamp; sem ela, update() escolhe o 1º
     setPreset(csv ? 'csv' : 'a');
@@ -275,7 +281,7 @@ svg#svg { display: block; width: 100%; height: auto; touch-action: manipulation 
   var R = null, picked;
   function update() {
     var w = weights();
-    IND.forEach(function (_, k) { $('w' + k).disabled = !$('c' + k).checked; });
+    IND.forEach(function (_, k) { $('w' + k).disabled = !$('c' + k).checked; if ($('d' + k)) $('d' + k).disabled = !$('c' + k).checked; });
     var res = promethee(w);
     $('aviso').hidden = !!res;
     if (!res) return;
@@ -325,8 +331,8 @@ svg#svg { display: block; width: 100%; height: auto; touch-action: manipulation 
     $('selpn').textContent = fmt(R.pn[picked], 3);
     $('selbars').innerHTML = IND.map(function (name, k) {
       if (!R.share[k]) return '';
-      var better = N - bound(SORTED[k], m.v[k], true);
-      var lo = Math.min(0, SORTED[k][0]), hi = Math.max(1, SORTED[k][N - 1]);  // escala 0 a 1 do ISDEL; estica só se a coluna sair dela
+      var better = N - bound(SORTED[k], DIR[k] * m.v[k], true);
+      var lo = Math.min(0, DIR[k] * SORTED[k][0], DIR[k] * SORTED[k][N - 1]), hi = Math.max(1, DIR[k] * SORTED[k][0], DIR[k] * SORTED[k][N - 1]);  // escala 0 a 1 do ISDEL; estica só se a coluna sair dela
       return '<li><span>' + esc(name) + ' <span style="color:var(--muted)">· ' + (better + 1) + 'º no indicador</span></span><span class="v num">' + fmt(m.v[k], 3) + '</span>' +
         '<span class="bar"><i style="width:' + ((m.v[k] - lo) / (hi - lo) * 100).toFixed(1) + '%"></i></span></li>';
     }).join('');
@@ -337,7 +343,11 @@ svg#svg { display: block; width: 100%; height: auto; touch-action: manipulation 
   function pick(i) { picked = i; renderPick(); }
 
   // Eventos
-  $('inds').addEventListener('input', update);
+  $('inds').addEventListener('input', function (e) {
+    var t = e.target;
+    if (t.className === 'dir') { var k = +t.dataset.k; DIR[k] = +t.value; SORTED[k] = sortCol(k); }  // trocou o sentido: reordena só essa coluna
+    update();
+  });
   $('presets').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) setPreset(b.dataset.p); });
   $('busca').addEventListener('input', renderList);
   $('lista').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) pick(+b.dataset.i); });
