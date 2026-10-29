@@ -37,27 +37,24 @@ const ESC = { sp: geometria(sp) };
 if (brD && brTopo) ESC.br = geometria({ d: brD, topo: brTopo });
 let atual = ESC.br ? 'br' : 'sp';
 
-// Ranking (só SP, onde há ISDEL)
-const D = sp.d, N = D.n;
-const cols = CRITERIOS.map(c => c.v(D)), dirs = CRITERIOS.map(c => c.dir), pesos = CRITERIOS.map(c => c.peso);
-// Ranking oficial do notebook quando publicado (vp1/notebook/ranking.json, bloco sp com ibge, soma e phi); senão, cálculo local.
-const nb = (await tenta(get('../notebook/ranking.json')))?.sp;  // formato: {sp:{ibge, soma, phi, ...}, br:{...}}
-const doNb = k => { if (!nb?.ibge || !nb[k]) return null; const m = new Map(nb.ibge.map((c, i) => [c, nb[k][i]])); const v = D.ibge.map(c => m.get(c)); return v.every(Number.isFinite) ? v : null; };
-const somaNb = doNb('soma'), phiNb = doNb('phi');
-const soma = somaNb || somaPonderada(cols, dirs, pesos), phi = phiNb || promethee(cols, dirs, pesos);
-const ordSoma = ordem(soma, D.nome), ordProm = ordem(phi, D.nome);
-const posSoma = new Array(N), posProm = new Array(N);
-ordSoma.forEach((i, k) => posSoma[i] = k + 1); ordProm.forEach((i, k) => posProm[i] = k + 1);
-const top10 = new Set([...ordSoma.slice(0, 10), ...ordProm.slice(0, 10)]);
-const spIdx = new Map(D.ibge.map((c, i) => [c, i]));
-const comuns = ordSoma.slice(0, 10).filter(i => posProm[i] <= 10).length;
-// Antes do log: mesma soma com eleitorado linear (PROMETHEE não muda, pois só usa a ordem).
-const iEl = CRITERIOS.findIndex(c => c.id === 'eleitorado');
-const somaLin = somaPonderada(cols.map((c, k) => k === iEl ? D.t26.eleitorado : c), dirs, pesos);
-const topLin = ordem(somaLin, D.nome).slice(0, 10), topLog = ordSoma.slice(0, 10);
-const comunsLin = topLin.filter(i => posProm[i] <= 10).length;
-const entraram = topLog.filter(i => !topLin.includes(i)).map(i => D.nome[i]), sairam = topLin.filter(i => !topLog.includes(i)).map(i => D.nome[i]);
-const spearman = 1 - 6 * posSoma.reduce((s, r, i) => s + (r - posProm[i]) ** 2, 0) / (N * (N * N - 1));
+// Ranking oficial: vp1/notebook/ranking.json = {criterios, sp:{ibge, soma, phi}, br:{...}}, na ordem dos JSON de dados.
+// Sem o arquivo, SP cai no cálculo local (calc.js) e o Brasil fica sem ranking.
+const NB = await tenta(get('../notebook/ranking.json'));
+function bloco(d, nb, local) {
+  const col = k => { if (!nb?.ibge || !nb[k]) return null; const m = new Map(nb.ibge.map((c, i) => [c, nb[k][i]])); const v = d.ibge.map(c => m.get(c)); return v.every(Number.isFinite) ? v : null; };
+  let soma = col('soma'), phi = col('phi');
+  const doNb = !!(soma && phi);
+  if (!doNb) { if (!local) return null; [soma, phi] = local(); }
+  const ordSoma = ordem(soma, d.nome), ordProm = ordem(phi, d.nome), posSoma = [], posProm = [];
+  ordSoma.forEach((i, k) => posSoma[i] = k + 1); ordProm.forEach((i, k) => posProm[i] = k + 1);
+  return { soma, phi, ordSoma, ordProm, posSoma, posProm, doNb, top10: new Set([...ordSoma.slice(0, 10), ...ordProm.slice(0, 10)]),
+    comuns: ordSoma.slice(0, 10).filter(i => posProm[i] <= 10).length, idx: new Map(d.ibge.map((c, i) => [c, i])) };
+}
+const D = sp.d;
+const RS = bloco(D, NB?.sp, () => { const cols = CRITERIOS.map(c => c.v(D)), dirs = CRITERIOS.map(c => c.dir), pesos = CRITERIOS.map(c => c.peso); return [somaPonderada(cols, dirs, pesos), promethee(cols, dirs, pesos)]; });
+const RB = ESC.br ? bloco(ESC.br.d, NB?.br, null) : null;
+const { ordSoma, ordProm } = RS;
+const marcaTop = R => (d, i) => !R.top10.has(i) ? cor.neutro : mix(cor.neutro, cor.acento, R.posSoma[i] <= 10 && R.posProm[i] <= 10 ? 1 : 0.55);
 
 // Cores vêm dos tokens do tema ativo
 const cor = {};
@@ -70,8 +67,11 @@ let ano = '26', realce = null;
 const mapas = {
   mapa: { g: () => ESC[atual], fill: (d, i) => realce && !realce.has(i) ? mix(cor.neutro, cor.bg, 0.5) : porMargem(ano === '22' ? d.margem22[i] : d.margem26[i]), sel: null },
   mudanca: { g: () => ESC[atual], fill: (d, i) => d.virou[i] ? (d.margem26[i] > 0 ? cor.c13 : cor.c22) : cor.neutro, sel: null },
-  ranking: { g: () => ESC.sp, fill: (d, i) => !top10.has(i) ? cor.neutro : mix(cor.neutro, cor.acento, posSoma[i] <= 10 && posProm[i] <= 10 ? 1 : 0.55), sel: null },
+  ranking: { g: () => ESC.sp, fill: (d, i) => marcaTop(RS)(d, i), sel: null },
+  rankingbr: { g: () => ESC.br, fill: (d, i) => marcaTop(RB)(d, i), sel: null },
 };
+
+if (!RB) delete mapas.rankingbr;
 
 function desenhar(id) {
   const cv = document.querySelector(`[data-mapa="${id}"]`), m = mapas[id], { d, paths, W, H } = m.g(), dpr = devicePixelRatio || 1;
@@ -90,7 +90,7 @@ function desenhar(id) {
 function legendas() {
   const sw = (c, t) => `<span><i style="background:${c}"></i>${t}</span>`, c = CAND[ano];
   $('#leg-mapa').innerHTML = sw(porMargem(0.4), `${c[13]} (13), margem grande`) + sw(porMargem(0.02), '13, apertado') + sw(porMargem(-0.02), '22, apertado') + sw(porMargem(-0.4), `${c[22]} (22), margem grande`);
-  $('#leg-rank').innerHTML = sw(cor.acento, 'Top 10 nas duas') + sw(mix(cor.neutro, cor.acento, 0.55), 'Top 10 em uma só');
+  document.querySelectorAll('.leg-rank').forEach(el => el.innerHTML = sw(cor.acento, 'Top 10 nas duas') + sw(mix(cor.neutro, cor.acento, 0.55), 'Top 10 em uma só'));
 }
 
 function card(id, i) {
@@ -100,11 +100,11 @@ function card(id, i) {
     const v = d['t' + a], mg = d['margem' + a][i];
     return `<tr><td>20${a}</td><td class="t13">${nf.format(v['13'][i])}</td><td class="t22">${nf.format(v['22'][i])}</td><td>${mg ? `${lado(mg)} +${pp(mg)}` : 'empate'}</td></tr>`;
   };
-  const j = spIdx.get(d.ibge[i]);
+  const pos = (R, nome) => { const j = R?.idx.get(d.ibge[i]); return j === undefined ? '' : `<p class="nota">Ranking ${nome}: ${R.posSoma[j]}º na soma ponderada · ${R.posProm[j]}º no PROMETHEE II</p>`; };
   document.querySelector(`[data-card="${id}"]`).innerHTML =
     `<h3>${esc(nomes[i])}</h3><table><thead><tr><th>Ano</th><th>Votos 13</th><th>Votos 22</th><th>Margem</th></tr></thead><tbody>${linha('22')}${linha('26')}</tbody></table>` +
     `<span class="selo ${d.virou[i] ? 'sim' : ''}">${d.virou[i] ? 'Virou' : 'Não virou'}</span> ` +
-    (j === undefined ? '' : `<span class="nota">Ranking SP: ${posSoma[j]}º na soma ponderada · ${posProm[j]}º no PROMETHEE II</span>`);
+    pos(RB, 'Brasil') + pos(RS, 'SP');
 }
 
 // Toque/clique no mapa
@@ -170,19 +170,36 @@ function trocarEscopo(e) {
 document.querySelectorAll('[data-esc]').forEach(b => { b.hidden = !ESC[b.dataset.esc]; b.addEventListener('click', () => trocarEscopo(b.dataset.esc)); });
 $('#mudanca').addEventListener('click', e => { const b = e.target.closest('.lista button'); if (b) card('mudanca', +b.dataset.i); });
 
-// Ranking: top 10 com barras
-function barras(el, ord, nota, fmt) {
+// Ranking: top 10 com barras, por bloco
+function barras(el, ord, nota, fmt, nomes, cardId) {
   const top = ord.slice(0, 10), lo = Math.min(...nota), hi = nota[top[0]];
-  el.innerHTML = top.map((i, k) => `<li><button type="button" data-i="${i}"><span class="pos">${k + 1}</span><span class="nm">${esc(D.nome[i])}</span><span class="v">${fmt(nota[i])}</span><span class="b"><i style="width:${100 * (nota[i] - lo) / (hi - lo || 1)}%"></i></span></button></li>`).join('');
-  el.addEventListener('click', e => { const b = e.target.closest('button'); if (b) card('ranking', +b.dataset.i); });
+  el.innerHTML = top.map((i, k) => `<li><button type="button" data-i="${i}"><span class="pos">${k + 1}</span><span class="nm">${esc(nomes[i])}</span><span class="v">${fmt(nota[i])}</span><span class="b"><i style="width:${100 * (nota[i] - lo) / (hi - lo || 1)}%"></i></span></button></li>`).join('');
+  el.addEventListener('click', e => { const b = e.target.closest('button'); if (b) card(cardId, +b.dataset.i); });
 }
 const f3 = x => x.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
-barras($('#top-soma'), ordSoma, soma, f3);
-barras($('#top-prom'), ordProm, phi, x => 'φ ' + f3(x));
-$('#concord').textContent = `${comuns} de 10 municípios aparecem no top 10 das duas metodologias. Barras relativas ao 1º colocado de cada lista.`;
-const lst = a => a.length ? a.join(', ') : 'nenhum';
-$('#antes-depois').innerHTML = `Antes e depois do log no eleitorado: o top 10 coincide em <strong>${comunsLin} de 10</strong> municípios com eleitorado linear e em <strong>${comuns} de 10</strong> com log.`;
-$('#antes-depois-nota').textContent = `O log mudou o top 10 da soma ponderada (entraram: ${lst(entraram)}; saíram: ${lst(sairam)}) e não muda o PROMETHEE II, que usa só a ordem. A divergência que sobra é de natureza: a soma usa a intensidade das diferenças, e "virou" (0 ou 1) vale um salto de 0,2 que nenhum outro critério alcança; o PROMETHEE com função usual só conta quem supera quem. Nos 645 municípios os dois rankings concordam bem (Spearman ${spearman.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}); a discordância está no topo.`;
+function painel(R, sufixo, nomes, cardId) {
+  barras($('#top-soma' + sufixo), R.ordSoma, R.soma, f3, nomes, cardId);
+  barras($('#top-prom' + sufixo), R.ordProm, R.phi, x => 'φ ' + f3(x), nomes, cardId);
+  $('#concord' + sufixo).textContent = `${R.comuns} de 10 municípios aparecem no top 10 das duas metodologias. Barras relativas ao 1º colocado de cada lista.`;
+}
+painel(RS, '', D.nome, 'ranking');
+$('#ranking-br').hidden = !RB;
+if (!RB) { document.querySelector('a[href="#ranking-br"]').href = '#ranking'; $('#h-rank').textContent = 'Onde a eleição de 2030 vai ser decidida'; }
+if (RB) painel(RB, '-br', ESC.br.nomes, 'rankingbr');
+
+// Critérios e pesos: do notebook quando houver; senão, os do cálculo local.
+// shortcut: formato de `criterios` ainda não visto; aceita lista [{nome|id, peso}] ou objeto {nome: peso}, por bloco ou geral.
+const pesoTxt = p => typeof p === 'number' ? (p <= 1 ? pct(p, 0) : p + '%') : esc(p ?? '');
+function listaCriterios(c) {
+  if (!c) return '';
+  const itens = Array.isArray(c) ? c.map(x => typeof x === 'object' ? [x.nome ?? x.id ?? x.criterio, x.peso, x.descricao] : [x]) : Object.entries(c).map(([k, v]) => typeof v === 'object' ? [v.nome ?? k, v.peso, v.descricao] : [k, v]);
+  return itens.map(([n, p, dsc]) => `<li>${esc(n)}${p !== undefined ? ` · <strong>${pesoTxt(p)}</strong>` : ''}${dsc ? ` <span class="nota">${esc(dsc)}</span>` : ''}</li>`).join('');
+}
+const critSp = RS.doNb ? (NB.criterios?.sp ?? NB.sp?.criterios ?? (NB.criterios?.br ? null : NB.criterios)) : CRITERIOS.map(c => ({ nome: c.nome + (c.dir < 0 ? ' (menor é melhor)' : ''), peso: c.peso }));
+const critBr = NB?.criterios?.br ?? NB?.br?.criterios;
+$('#crit-sp').innerHTML = listaCriterios(critSp); $('#crit-sp-bloco').hidden = !critSp;
+$('#crit-br').innerHTML = listaCriterios(critBr); $('#crit-br-bloco').hidden = !(RB && critBr);
+
 // Pergunte ao mapa
 function responder(q) {
   const r = perguntar(q, { br: ESC.br, sp: ESC.sp, rank: { prom: ordProm, soma: ordSoma } }), out = $('#resposta');
@@ -204,7 +221,7 @@ $('#resposta').addEventListener('click', e => {
   const b = e.target.closest('[data-i]'); if (b) card('mapa', +b.dataset.i);
 });
 
-$('#fontes-dados').textContent = (somaNb && phiNb ? 'Ranking lido do notebook (vp1/notebook/ranking.json). ' : '') + (mock ? 'Os números exibidos são fictícios (mock de desenvolvimento).' : `Dados gerados em ${new Date(D.gerado).toLocaleDateString('pt-BR')}. Detalhes da coleta e checagens em vp1/dados/LEIAME.md.`);
+$('#fontes-dados').textContent = (RS.doNb ? 'Rankings do notebook (vp1/notebook/ranking.json). ' : 'Ranking de SP calculado neste site enquanto o ranking do notebook não é publicado. ') + (mock ? 'Os números exibidos são fictícios (mock de desenvolvimento).' : `Dados gerados em ${new Date(D.gerado).toLocaleDateString('pt-BR')}. Detalhes da coleta e checagens em vp1/dados/LEIAME.md.`);
 
 const desenharTodos = () => { lerCores(); Object.keys(mapas).forEach(desenhar); legendas(); };
 $('#tema').addEventListener('click', () => {
@@ -215,4 +232,4 @@ $('#tema').addEventListener('click', () => {
 });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', desenharTodos);
 let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(desenharTodos, 100); });
-lerCores(); legendas(); trocarEscopo(atual); desenhar('ranking');
+lerCores(); legendas(); trocarEscopo(atual); desenhar('ranking'); if (RB) desenhar('rankingbr');

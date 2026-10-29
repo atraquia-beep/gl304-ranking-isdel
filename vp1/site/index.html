@@ -16,7 +16,7 @@
 <div id="aviso" class="aviso" hidden>DADOS FICTÍCIOS · versão de desenvolvimento, os números não são resultados reais</div>
 <header class="topo">
   <nav aria-label="Seções">
-    <a href="#capa">Início</a><a href="#mapa">Mapa</a><a href="#mudanca">Mudança</a><a href="#ranking">Ranking</a><a href="#metodo">Método</a>
+    <a href="#capa">Início</a><a href="#mapa">Mapa</a><a href="#mudanca">Mudança</a><a href="#ranking-br">Ranking</a><a href="#metodo">Método</a>
   </nav>
   <div class="seg mini vidro" role="group" aria-label="Escopo">
     <button type="button" data-esc="br" aria-pressed="true">Brasil</button>
@@ -63,17 +63,29 @@
     <details id="mais-mud"><summary></summary><ol class="lista" id="resto-mud" start="13"></ol></details>
   </section>
 
+  <section id="ranking-br" aria-labelledby="h-rank-br" hidden>
+    <h2 id="h-rank-br">Onde a eleição de 2030 vai ser decidida</h2>
+    <p class="sobre">Brasil · 5.570 municípios</p>
+    <div class="duas vidro">
+      <div><h3>Soma ponderada</h3><ol class="barras" id="top-soma-br"></ol></div>
+      <div><h3>PROMETHEE II</h3><ol class="barras" id="top-prom-br"></ol></div>
+    </div>
+    <p class="nota" id="concord-br"></p>
+    <div class="legenda leg-rank"></div>
+    <canvas class="mapa" data-mapa="rankingbr" role="img" aria-label="Mapa do Brasil com o top 10 das duas metodologias marcado. A mesma informação está nas listas acima."></canvas>
+    <div class="card vidro" data-card="rankingbr" aria-live="polite"></div>
+  </section>
+
   <section id="ranking" aria-labelledby="h-rank">
-    <h2 id="h-rank">Onde a eleição de 2030 vai ser decidida</h2>
-    <p class="sobre">Bloco São Paulo · com ISDEL</p>
-    <p class="nota">Top 10 por duas metodologias, com os mesmos cinco critérios e pesos iguais (20% cada): virou, margem de 2026 apertada, eleitorado (em log), abstenção e ISDEL (maior é melhor). O ranking cobre os 645 municípios de SP, onde há ISDEL.</p>
+    <h2 id="h-rank">Bloco São Paulo, com ISDEL</h2>
+    <p class="sobre">São Paulo · 645 municípios</p>
     <div class="duas vidro">
       <div><h3>Soma ponderada</h3><ol class="barras" id="top-soma"></ol></div>
       <div><h3>PROMETHEE II</h3><ol class="barras" id="top-prom"></ol></div>
     </div>
     <p class="nota" id="concord"></p>
-    <div class="legenda" id="leg-rank"></div>
-    <canvas class="mapa" data-mapa="ranking" role="img" aria-label="Mapa com o top 10 das duas metodologias marcado. A mesma informação está nas listas acima."></canvas>
+    <div class="legenda leg-rank"></div>
+    <canvas class="mapa" data-mapa="ranking" role="img" aria-label="Mapa de São Paulo com o top 10 das duas metodologias marcado. A mesma informação está nas listas acima."></canvas>
     <div class="card vidro" data-card="ranking" aria-live="polite"></div>
   </section>
 
@@ -85,11 +97,11 @@
       <li><strong>ISDEL:</strong> índice da Atividade 3 (Educação, Densidade Empresarial, Tecido Empresarial e Gestão Pública).</li>
       <li><strong>Margem</strong> = (votos 13 − votos 22) ÷ votos válidos. Positiva: 13 à frente; negativa: 22 à frente. <strong>Virou</strong> = o sinal da margem mudou entre 2022 e 2026.</li>
       <li><strong>Abstenção</strong> = 1 − comparecimento ÷ eleitorado (2026).</li>
-      <li><strong>Soma ponderada:</strong> cada critério normalizado de 0 a 1 (mín.–máx., invertido quando menor é melhor) e somado com os pesos. O eleitorado entra em log: na escala linear, a capital (9,3 milhões) achata os outros 644 municípios perto de zero.</li>
+      <li><strong>Soma ponderada:</strong> cada critério normalizado e somado com os pesos abaixo.</li>
       <li><strong>PROMETHEE II:</strong> comparação par a par com função de preferência usual; o ranking segue o fluxo líquido φ.</li>
     </ul>
-    <p id="antes-depois" class="destaque"></p>
-    <p id="antes-depois-nota" class="nota"></p>
+    <div id="crit-br-bloco" hidden><h3>Critérios e pesos · Brasil</h3><ul class="texto" id="crit-br"></ul></div>
+    <div id="crit-sp-bloco" hidden><h3>Critérios e pesos · São Paulo</h3><ul class="texto" id="crit-sp"></ul></div>
     <p id="fontes-dados" class="nota"></p>
     <p><a class="botao" href="https://colab.research.google.com/drive/19X66ItRxkW9-suIIIt4QrV1HLAU8-8Le?usp=sharing" target="_blank" rel="noopener">Abrir o notebook no Colab ↗</a></p>
   </section>
