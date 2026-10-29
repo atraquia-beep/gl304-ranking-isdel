@@ -1,4 +1,5 @@
 import { decodeTopo, CRITERIOS, somaPonderada, promethee, ordem } from './calc.js';
+import { perguntar, SUGESTOES } from './pergunta.js';
 
 const $ = s => document.querySelector(s);
 const nf = new Intl.NumberFormat('pt-BR');
@@ -29,8 +30,8 @@ function geometria({ d, topo }) {
     g.rings.forEach(r => r.forEach(([x, y], k) => p[k ? 'lineTo' : 'moveTo']((x - x0) * kx, y1 - y)));
     paths[i] = p;
   });
-  const nomes = d.nome.map((n, i) => `${n} (${UF[String(d.ibge[i]).slice(0, 2)]})`);
-  return { d, paths, W: (x1 - x0) * kx, H: y1 - y0, nomes };
+  const uf = d.ibge.map(c => UF[String(c).slice(0, 2)]), nomes = d.nome.map((n, i) => `${n} (${uf[i]})`);
+  return { d, paths, W: (x1 - x0) * kx, H: y1 - y0, nomes, uf };
 }
 const ESC = { sp: geometria(sp) };
 if (brD && brTopo) ESC.br = geometria({ d: brD, topo: brTopo });
@@ -39,7 +40,11 @@ let atual = ESC.br ? 'br' : 'sp';
 // Ranking (só SP, onde há ISDEL)
 const D = sp.d, N = D.n;
 const cols = CRITERIOS.map(c => c.v(D)), dirs = CRITERIOS.map(c => c.dir), pesos = CRITERIOS.map(c => c.peso);
-const soma = somaPonderada(cols, dirs, pesos), phi = promethee(cols, dirs, pesos);
+// Ranking oficial do notebook quando publicado (vp1/notebook/ranking.json, colunar com ibge, soma e phi); senão, cálculo local.
+const nb = await tenta(get('../notebook/ranking.json'));
+const doNb = k => { if (!nb?.ibge || !nb[k]) return null; const m = new Map(nb.ibge.map((c, i) => [c, nb[k][i]])); const v = D.ibge.map(c => m.get(c)); return v.every(Number.isFinite) ? v : null; };
+const somaNb = doNb('soma'), phiNb = doNb('phi');
+const soma = somaNb || somaPonderada(cols, dirs, pesos), phi = phiNb || promethee(cols, dirs, pesos);
 const ordSoma = ordem(soma, D.nome), ordProm = ordem(phi, D.nome);
 const posSoma = new Array(N), posProm = new Array(N);
 ordSoma.forEach((i, k) => posSoma[i] = k + 1); ordProm.forEach((i, k) => posProm[i] = k + 1);
@@ -61,9 +66,9 @@ const hex = h => [1, 3, 5].map(k => parseInt(h.slice(k, k + 2), 16));
 const mix = (a, b, t) => { const A = hex(a), B = hex(b); return `rgb(${A.map((v, k) => Math.round(v + (B[k] - v) * t)).join(',')})`; };
 const porMargem = m => m ? mix(cor.neutro, m > 0 ? cor.c13 : cor.c22, 0.3 + 0.7 * Math.min(1, Math.abs(m) / 0.4)) : cor.neutro;
 
-let ano = '26';
+let ano = '26', realce = null;
 const mapas = {
-  mapa: { g: () => ESC[atual], fill: (d, i) => porMargem(ano === '22' ? d.margem22[i] : d.margem26[i]), sel: null },
+  mapa: { g: () => ESC[atual], fill: (d, i) => realce && !realce.has(i) ? mix(cor.neutro, cor.bg, 0.5) : porMargem(ano === '22' ? d.margem22[i] : d.margem26[i]), sel: null },
   mudanca: { g: () => ESC[atual], fill: (d, i) => d.virou[i] ? (d.margem26[i] > 0 ? cor.c13 : cor.c22) : cor.neutro, sel: null },
   ranking: { g: () => ESC.sp, fill: (d, i) => !top10.has(i) ? cor.neutro : mix(cor.neutro, cor.acento, posSoma[i] <= 10 && posProm[i] <= 10 ? 1 : 0.55), sel: null },
 };
@@ -145,15 +150,20 @@ function trocarEscopo(e) {
   $('#esc-nome').textContent = e === 'br' ? 'Brasil' : 'São Paulo';
   $('#esc-lead').textContent = e === 'br' ? 'Municípios brasileiros' : 'Municípios paulistas';
   $('#ff').innerHTML = placar(d, '22') + placar(d, '26');
-  const nv = d.virou.reduce((s, x) => s + x, 0), para13 = d.virou.filter((v, i) => v && d.margem26[i] > 0).length;
-  $('#viraram').innerHTML = `<strong>${nf.format(nv)}</strong> dos ${nf.format(d.n)} municípios trocaram de vencedor: ${nf.format(para13)} passaram para o 13 e ${nf.format(nv - para13)} para o 22.`;
+  const vir = d.virou.map((_, i) => i).filter(i => d.virou[i]), para13 = vir.filter(i => d.margem26[i] > 0).length;
+  const aptos = vir.reduce((s, i) => s + d.t26.eleitorado[i], 0), apertados = d.margem26.filter(m => Math.abs(m) < 0.05).length;
+  const mi = x => x >= 1e6 ? (x / 1e6).toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + ' mi' : nf.format(x);
+  $('#numeros').innerHTML =
+    `<div><dt>municípios viraram</dt><dd>${nf.format(vir.length)}</dd><dd class="p">${nf.format(para13)} para o 13 · ${nf.format(vir.length - para13)} para o 22 · de ${nf.format(d.n)}</dd></div>` +
+    `<div><dt>eleitores aptos nesses municípios</dt><dd>${mi(aptos)}</dd><dd class="p">em 2026</dd></div>` +
+    `<div><dt>municípios com margem abaixo de 5 p.p.</dt><dd>${nf.format(apertados)}</dd><dd class="p">em 2026, contando empates</dd></div>`;
   $('#municipios').innerHTML = nomes.map(n => `<option value="${esc(n)}">`).join('');
-  const vir = d.virou.map((_, i) => i).filter(i => d.virou[i]).sort((a, b) => Math.abs(d.margem26[b] - d.margem22[b]) - Math.abs(d.margem26[a] - d.margem22[a]));
+  vir.sort((a, b) => Math.abs(d.margem26[b] - d.margem22[b]) - Math.abs(d.margem26[a] - d.margem22[a]));
   $('#lista-mud').innerHTML = vir.slice(0, 12).map(itemMud(d, nomes)).join('');
   $('#mais-mud').hidden = vir.length <= 12;
   $('#mais-mud summary').textContent = `Ver os outros ${nf.format(vir.length - 12)}`;
   $('#resto-mud').innerHTML = vir.slice(12).map(itemMud(d, nomes)).join('');
-  mapas.mapa.sel = mapas.mudanca.sel = null;
+  mapas.mapa.sel = mapas.mudanca.sel = null; realce = null; $('#resposta').hidden = true;
   document.querySelector('[data-card="mapa"]').innerHTML = document.querySelector('[data-card="mudanca"]').innerHTML = '';
   desenhar('mapa'); desenhar('mudanca');
 }
@@ -173,7 +183,28 @@ $('#concord').textContent = `${comuns} de 10 municípios aparecem no top 10 das 
 const lst = a => a.length ? a.join(', ') : 'nenhum';
 $('#antes-depois').innerHTML = `Antes e depois do log no eleitorado: o top 10 coincide em <strong>${comunsLin} de 10</strong> municípios com eleitorado linear e em <strong>${comuns} de 10</strong> com log.`;
 $('#antes-depois-nota').textContent = `O log mudou o top 10 da soma ponderada (entraram: ${lst(entraram)}; saíram: ${lst(sairam)}) e não muda o PROMETHEE II, que usa só a ordem. A divergência que sobra é de natureza: a soma usa a intensidade das diferenças, e "virou" (0 ou 1) vale um salto de 0,2 que nenhum outro critério alcança; o PROMETHEE com função usual só conta quem supera quem. Nos 645 municípios os dois rankings concordam bem (Spearman ${spearman.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}); a discordância está no topo.`;
-$('#fontes-dados').textContent = mock ? 'Os números exibidos são fictícios (mock de desenvolvimento).' : `Dados gerados em ${new Date(D.gerado).toLocaleDateString('pt-BR')}. Detalhes da coleta e checagens em vp1/dados/LEIAME.md.`;
+// Pergunte ao mapa
+function responder(q) {
+  const r = perguntar(q, { br: ESC.br, sp: ESC.sp, rank: { prom: ordProm, soma: ordSoma } }), out = $('#resposta');
+  out.hidden = false;
+  if (!r) { out.innerHTML = '<p>Não entendi essa pergunta. Tente uma das sugestões: filtro por estado, virada, vencedor, margem, maiores cidades ou top do ranking.</p>'; return; }
+  if (r.escopo !== atual) trocarEscopo(r.escopo);
+  out.hidden = false;
+  realce = new Set(r.idx); desenhar('mapa');
+  const { nomes } = ESC[atual], mais = r.idx.length - 8;
+  out.innerHTML = `<p class="titulo">${esc(r.titulo)}</p><p class="num">${nf.format(r.total)} <small>município${r.total === 1 ? '' : 's'}</small></p>` +
+    `<ol class="curta">${r.idx.slice(0, 8).map(i => `<li><button type="button" data-i="${i}">${esc(nomes[i])}</button></li>`).join('')}</ol>` +
+    (mais > 0 ? `<p class="nota">e mais ${nf.format(mais)} acesos no mapa.</p>` : '') + '<button type="button" class="limpar">Limpar</button>';
+}
+$('#pergunta').addEventListener('submit', e => { e.preventDefault(); responder($('#q').value); });
+$('#sugestoes').innerHTML = SUGESTOES.map(s => `<button type="button">${s}</button>`).join('');
+$('#sugestoes').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { $('#q').value = b.textContent; responder(b.textContent); } });
+$('#resposta').addEventListener('click', e => {
+  if (e.target.closest('.limpar')) { realce = null; $('#resposta').hidden = true; desenhar('mapa'); $('#q').focus(); return; }
+  const b = e.target.closest('[data-i]'); if (b) card('mapa', +b.dataset.i);
+});
+
+$('#fontes-dados').textContent = (somaNb && phiNb ? 'Ranking lido do notebook (vp1/notebook/ranking.json). ' : '') + (mock ? 'Os números exibidos são fictícios (mock de desenvolvimento).' : `Dados gerados em ${new Date(D.gerado).toLocaleDateString('pt-BR')}. Detalhes da coleta e checagens em vp1/dados/LEIAME.md.`);
 
 const desenharTodos = () => { lerCores(); Object.keys(mapas).forEach(desenhar); legendas(); };
 $('#tema').addEventListener('click', () => {

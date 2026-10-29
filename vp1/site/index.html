@@ -18,7 +18,7 @@
   <nav aria-label="Seções">
     <a href="#capa">Início</a><a href="#mapa">Mapa</a><a href="#mudanca">Mudança</a><a href="#ranking">Ranking</a><a href="#metodo">Método</a>
   </nav>
-  <div class="seg mini" role="group" aria-label="Escopo">
+  <div class="seg mini vidro" role="group" aria-label="Escopo">
     <button type="button" data-esc="br" aria-pressed="true">Brasil</button>
     <button type="button" data-esc="sp" aria-pressed="false">SP</button>
   </div>
@@ -31,27 +31,33 @@
     <h1>Quem virou de lado desde 2022?</h1>
     <p class="lead"><span id="esc-lead">Municípios</span> que trocaram o vencedor do 2º turno presidencial de 2022 para 2026. Onde a eleição de 2030 vai ser decidida?</p>
     <div class="ff" id="ff"></div>
-    <p class="destaque" id="viraram"></p>
+    <dl class="numeros" id="numeros"></dl>
   </section>
 
   <section id="mapa" aria-labelledby="h-mapa">
     <h2 id="h-mapa">Vencedor por município</h2>
-    <div class="seg" role="group" aria-label="Ano">
+    <div class="seg vidro" role="group" aria-label="Ano">
       <button type="button" data-ano="22" aria-pressed="false">2022</button>
       <button type="button" data-ano="26" aria-pressed="true">2026</button>
     </div>
     <p class="nota">Cor pelo vencedor; quanto mais forte, maior a margem. Toque em um município ou busque pelo nome.</p>
     <div class="legenda" id="leg-mapa"></div>
-    <canvas class="mapa" data-mapa="mapa" aria-label="Mapa de São Paulo por vencedor. Use a busca abaixo para navegar pelo teclado." role="img"></canvas>
+    <form class="pergunta" id="pergunta" role="search">
+      <label for="q">Pergunte ao mapa</label>
+      <div class="linha"><input id="q" autocomplete="off" placeholder="Ex.: quais viraram em MG"><button type="submit">Perguntar</button></div>
+      <div class="sugestoes" id="sugestoes" aria-label="Sugestões"></div>
+    </form>
+    <div class="resposta vidro" id="resposta" aria-live="polite" hidden></div>
+    <canvas class="mapa" data-mapa="mapa" aria-label="Mapa por vencedor. Use a pergunta acima ou a busca abaixo para navegar pelo teclado." role="img"></canvas>
     <label class="busca">Buscar município <input list="municipios" data-busca="mapa" autocomplete="off" placeholder="Ex.: Campinas"></label>
-    <div class="card" data-card="mapa" aria-live="polite"></div>
+    <div class="card vidro" data-card="mapa" aria-live="polite"></div>
   </section>
 
   <section id="mudanca" aria-labelledby="h-mud">
     <h2 id="h-mud">Mudança: só quem virou</h2>
     <p class="nota">Em destaque, os municípios cujo vencedor em 2026 é diferente do de 2022, na cor do novo vencedor.</p>
     <canvas class="mapa" data-mapa="mudanca" role="img" aria-label="Mapa com os municípios que viraram em destaque. A mesma informação está na lista abaixo."></canvas>
-    <div class="card" data-card="mudanca" aria-live="polite"></div>
+    <div class="card vidro" data-card="mudanca" aria-live="polite"></div>
     <h3>Maiores variações de margem</h3>
     <ol class="lista" id="lista-mud"></ol>
     <details id="mais-mud"><summary></summary><ol class="lista" id="resto-mud" start="13"></ol></details>
@@ -61,14 +67,14 @@
     <h2 id="h-rank">Onde a eleição de 2030 vai ser decidida</h2>
     <p class="sobre">Bloco São Paulo · com ISDEL</p>
     <p class="nota">Top 10 por duas metodologias, com os mesmos cinco critérios e pesos iguais (20% cada): virou, margem de 2026 apertada, eleitorado (em log), abstenção e ISDEL (maior é melhor). O ranking cobre os 645 municípios de SP, onde há ISDEL.</p>
-    <div class="duas">
+    <div class="duas vidro">
       <div><h3>Soma ponderada</h3><ol class="barras" id="top-soma"></ol></div>
       <div><h3>PROMETHEE II</h3><ol class="barras" id="top-prom"></ol></div>
     </div>
     <p class="nota" id="concord"></p>
     <div class="legenda" id="leg-rank"></div>
     <canvas class="mapa" data-mapa="ranking" role="img" aria-label="Mapa com o top 10 das duas metodologias marcado. A mesma informação está nas listas acima."></canvas>
-    <div class="card" data-card="ranking" aria-live="polite"></div>
+    <div class="card vidro" data-card="ranking" aria-live="polite"></div>
   </section>
 
   <section id="metodo" aria-labelledby="h-met">
