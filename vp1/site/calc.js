@@ -22,7 +22,7 @@ export function decodeTopo(topo) {
 export const CRITERIOS = [
   { id: 'virou', nome: 'Virou', dir: 1, peso: 0.2, v: d => d.virou },
   { id: 'margem', nome: '|Margem 2026|', dir: -1, peso: 0.2, v: d => d.margem26.map(Math.abs) },
-  { id: 'eleitorado', nome: 'Eleitorado 2026', dir: 1, peso: 0.2, v: d => d.t26.eleitorado },
+  { id: 'eleitorado', nome: 'log(Eleitorado 2026)', dir: 1, peso: 0.2, v: d => d.t26.eleitorado.map(Math.log) },  // log: sem ele a capital achata a escala mín.–máx.
   { id: 'abstencao', nome: 'Abstenção 2026', dir: 1, peso: 0.2, v: d => d.t26.comparecimento.map((c, i) => 1 - c / d.t26.eleitorado[i]) },
   { id: 'isdel', nome: 'ISDEL', dir: 1, peso: 0.2, v: d => d.isdel.isdel },
 ];

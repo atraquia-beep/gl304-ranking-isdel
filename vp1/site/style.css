@@ -103,3 +103,5 @@ button { font: inherit; color: inherit; cursor: pointer; }
 footer { color: var(--mut); font-size: .85rem; padding-bottom: 40px; border-top: 1px solid var(--linha); }
 details summary { cursor: pointer; padding: 12px 2px; color: var(--mut); min-height: 44px; }
 section { scroll-margin-top: 60px; }
+.seg.mini { margin: 0; } .seg.mini button { padding: 4px 12px; min-height: 32px; font-size: .85rem; }
+@media (max-width: 480px) { .topo nav { gap: 10px; font-size: .8rem; } .topo nav a:first-child { display: none; } }
