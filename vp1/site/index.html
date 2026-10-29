@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quem virou de lado</title>
+<meta name="description" content="Municípios paulistas que trocaram o vencedor do 2º turno presidencial entre 2022 e 2026, e um ranking de onde 2030 pode ser decidida.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap">
+<link rel="stylesheet" href="style.css">
+<script>try { var t = localStorage.getItem('tema'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+</head>
+<body>
+<a class="pular" href="#mapa">Pular para o mapa</a>
+<div id="aviso" class="aviso" hidden>DADOS FICTÍCIOS · versão de desenvolvimento, os números não são resultados reais</div>
+<header class="topo">
+  <nav aria-label="Seções">
+    <a href="#capa">Início</a><a href="#mapa">Mapa</a><a href="#mudanca">Mudança</a><a href="#ranking">Ranking</a><a href="#metodo">Método</a>
+  </nav>
+  <button id="tema" type="button" aria-label="Alternar tema claro ou escuro">◐</button>
+</header>
+
+<main>
+  <section id="capa">
+    <p class="sobre">GL304 · Projeto 1 · São Paulo</p>
+    <h1>Quem virou de lado desde 2022?</h1>
+    <p class="lead">Municípios paulistas que trocaram o vencedor do 2º turno presidencial de 2022 para 2026. Onde a eleição de 2030 tende a ser decidida?</p>
+    <div class="ff" id="ff"></div>
+    <p class="destaque" id="viraram"></p>
+  </section>
+
+  <section id="mapa" aria-labelledby="h-mapa">
+    <h2 id="h-mapa">Vencedor por município</h2>
+    <div class="seg" role="group" aria-label="Ano">
+      <button type="button" data-ano="22" aria-pressed="false">2022</button>
+      <button type="button" data-ano="26" aria-pressed="true">2026</button>
+    </div>
+    <p class="nota">Cor pelo vencedor; quanto mais forte, maior a margem. Toque em um município ou busque pelo nome.</p>
+    <div class="legenda" id="leg-mapa"></div>
+    <canvas class="mapa" data-mapa="mapa" aria-label="Mapa de São Paulo por vencedor. Use a busca abaixo para navegar pelo teclado." role="img"></canvas>
+    <label class="busca">Buscar município <input list="municipios" data-busca="mapa" autocomplete="off" placeholder="Ex.: Campinas"></label>
+    <div class="card" data-card="mapa" aria-live="polite"></div>
+  </section>
+
+  <section id="mudanca" aria-labelledby="h-mud">
+    <h2 id="h-mud">Mudança: só quem virou</h2>
+    <p class="nota">Em destaque, os municípios cujo vencedor em 2026 é diferente do de 2022, na cor do novo vencedor.</p>
+    <canvas class="mapa" data-mapa="mudanca" role="img" aria-label="Mapa com os municípios que viraram em destaque. A mesma informação está na lista abaixo."></canvas>
+    <div class="card" data-card="mudanca" aria-live="polite"></div>
+    <h3>Maiores variações de margem</h3>
+    <ol class="lista" id="lista-mud"></ol>
+    <details id="mais-mud"><summary></summary><ol class="lista" id="resto-mud" start="13"></ol></details>
+  </section>
+
+  <section id="ranking" aria-labelledby="h-rank">
+    <h2 id="h-rank">Onde 2030 tende a ser decidida</h2>
+    <p class="nota">Top 10 por duas metodologias, com os mesmos cinco critérios e pesos iguais (20% cada): virou, margem de 2026 apertada, eleitorado, abstenção e ISDEL.</p>
+    <div class="duas">
+      <div><h3>Soma ponderada</h3><ol class="barras" id="top-soma"></ol></div>
+      <div><h3>PROMETHEE II</h3><ol class="barras" id="top-prom"></ol></div>
+    </div>
+    <p class="nota" id="concord"></p>
+    <div class="legenda" id="leg-rank"></div>
+    <canvas class="mapa" data-mapa="ranking" role="img" aria-label="Mapa com o top 10 das duas metodologias marcado. A mesma informação está nas listas acima."></canvas>
+    <div class="card" data-card="ranking" aria-live="polite"></div>
+  </section>
+
+  <section id="metodo" aria-labelledby="h-met">
+    <h2 id="h-met">Fontes e método</h2>
+    <ul class="texto">
+      <li><strong>Votos:</strong> TSE, resultados do 2º turno presidencial de 2022 e 2026 por município.</li>
+      <li><strong>Malha:</strong> IBGE, municípios de São Paulo.</li>
+      <li><strong>ISDEL:</strong> índice da Atividade 3 (educação, densidade, tecido produtivo e gestão).</li>
+      <li><strong>Margem</strong> = (votos 13 − votos 22) ÷ votos válidos. Positiva: 13 à frente; negativa: 22 à frente. <strong>Virou</strong> = o sinal da margem mudou entre 2022 e 2026.</li>
+      <li><strong>Abstenção</strong> = 1 − comparecimento ÷ eleitorado (2026).</li>
+      <li><strong>Soma ponderada:</strong> cada critério normalizado de 0 a 1 (mín.–máx., invertido quando menor é melhor) e somado com os pesos.</li>
+      <li><strong>PROMETHEE II:</strong> comparação par a par com função de preferência usual; o ranking segue o fluxo líquido φ.</li>
+    </ul>
+    <p id="fontes-dados" class="nota"></p>
+    <p><a class="botao" href="https://colab.research.google.com/drive/19X66ItRxkW9-suIIIt4QrV1HLAU8-8Le?usp=sharing" target="_blank" rel="noopener">Abrir o notebook no Colab ↗</a></p>
+  </section>
+</main>
+<footer><p>André Traquia · GL304 Métodos Quantitativos Aplicados · Unicamp</p></footer>
+<datalist id="municipios"></datalist>
+<script type="module" src="app.js"></script>
+</body>
+</html>
