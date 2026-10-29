@@ -40,8 +40,8 @@ let atual = ESC.br ? 'br' : 'sp';
 // Ranking (só SP, onde há ISDEL)
 const D = sp.d, N = D.n;
 const cols = CRITERIOS.map(c => c.v(D)), dirs = CRITERIOS.map(c => c.dir), pesos = CRITERIOS.map(c => c.peso);
-// Ranking oficial do notebook quando publicado (vp1/notebook/ranking.json, colunar com ibge, soma e phi); senão, cálculo local.
-const nb = await tenta(get('../notebook/ranking.json'));
+// Ranking oficial do notebook quando publicado (vp1/notebook/ranking.json, bloco sp com ibge, soma e phi); senão, cálculo local.
+const nb = (await tenta(get('../notebook/ranking.json')))?.sp;  // formato: {sp:{ibge, soma, phi, ...}, br:{...}}
 const doNb = k => { if (!nb?.ibge || !nb[k]) return null; const m = new Map(nb.ibge.map((c, i) => [c, nb[k][i]])); const v = D.ibge.map(c => m.get(c)); return v.every(Number.isFinite) ? v : null; };
 const somaNb = doNb('soma'), phiNb = doNb('phi');
 const soma = somaNb || somaPonderada(cols, dirs, pesos), phi = phiNb || promethee(cols, dirs, pesos);
