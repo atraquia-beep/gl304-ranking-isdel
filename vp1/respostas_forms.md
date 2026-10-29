@@ -21,5 +21,5 @@ https://forms.gle/p1CWh2GdwGCtHzbH8
 
 - **Nome do representante:** André Traquia
 - **Email:** a185759@dac.unicamp.br
-- **Q1 – Link do roteiro (Google Drive):** [LINK DO DRIVE – entra depois do upload]
-- **Q2 – Integrantes:** André Traquia, Vinícius [SOBRENOME], Victor Olivetti
+- **Q1 – Link do roteiro (Google Drive):** https://docs.google.com/document/d/1V20TH1fS8bTx1zwdRbDbBNq5I4ox8kO09WjrkYq7f5o/edit?usp=sharing (antes, liberar "qualquer pessoa com o link: leitor")
+- **Q2 – Integrantes:** André Traquia, Vinícius de Souza Côrte Brilho, Victor Olivetti Regina

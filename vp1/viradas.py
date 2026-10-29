@@ -35,7 +35,7 @@ for cd in v22:
     m22 = (l22 - b22) / (l22 + b22)  # margem a favor do 13, em fração dos válidos
     m26 = (l26 - b26) / (l26 + b26)
     rows.append(dict(uf=uf, ibge=ibge, municipio=nome, lula22=l22, bolsonaro22=b22, lula26=l26, flavio26=b26,
-                     margem22=round(m22, 4), margem26=round(m26, 4), virou=int((m22 > 0) != (m26 > 0)),
+                     margem22=round(m22, 4), margem26=round(m26, 4), virou=int(m22 * m26 < 0),  # empate (margem 0) não conta como virada
                      aptos26=apt[cd], abstencao26=round(abst[cd] / apt[cd], 4)))
 
 with open(f"{D}/viradas.csv", "w", newline="") as f:

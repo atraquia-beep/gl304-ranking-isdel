@@ -4,7 +4,7 @@ subtitle: "Onde a eleição de 2030 vai ser decidida"
 ---
 
 **Disciplina:** GL304 Métodos Quantitativos Aplicados, turma B, prof. Anibal Tavares de Azevedo (Unicamp, FCA)\
-**Grupo:** André Traquia, Vinícius [SOBRENOME], Victor Olivetti · **Representante:** André Traquia\
+**Grupo:** André Traquia, Vinícius de Souza Côrte Brilho, Victor Olivetti Regina · **Representante:** André Traquia\
 **Versão:** 29/10/2026 · **Status:** roteiro. Os números entre [colchetes] saem do programa e entram quando ele rodar.
 
 # 1. Tema e dor (Q2)
@@ -17,11 +17,11 @@ subtitle: "Onde a eleição de 2030 vai ser decidida"
 
 **Decisão que o produto apoia:** quais municípios priorizar para presença do candidato, mídia local e mobilização de comparecimento no ciclo de 2030.
 
-**Fato que abre o vídeo (dado real, TSE):** entre o 2º turno de 2022 (Lula × Bolsonaro) e o de 2026 (Lula × Flávio Bolsonaro), **310 municípios trocaram de vencedor**, onde votam **9,36 milhões de eleitores aptos**. Em 279 deles o vencedor passou a ser o candidato 22 e em 31 o 13. Mesmo assim, o 13 ganhou com margem maior no total nacional. Isso mostra que contar municípios não basta: é preciso ponderar tamanho e margem. Em **464 municípios** a margem de 2026 ficou abaixo de 5 pontos percentuais.
+**Fato que abre o vídeo (dado real, TSE):** entre o 2º turno de 2022 (Lula × Bolsonaro) e o de 2026 (Lula × Flávio Bolsonaro), **309 municípios trocaram de vencedor**, onde votam **9,36 milhões de eleitores aptos**. Em 278 deles o vencedor passou a ser o candidato 22 e em 31 o 13. Mesmo assim, o 13 ganhou com margem maior no total nacional. Isso mostra que contar municípios não basta: é preciso ponderar tamanho e margem. Em **464 municípios** a margem de 2026 ficou abaixo de 5 pontos percentuais.
 
-**Recorte SP (bloco ISDEL):** 33 dos 645 municípios viraram (29 para o 22, 4 para o 13), com 625.523 eleitores aptos. Os maiores: São Vicente (256 mil aptos, margem 2026 de 0,75 p.p.), Poá, Ribeirão Pires (0,15 p.p.) e Mongaguá.
+**Recorte SP (bloco ISDEL):** 33 dos 645 municípios viraram (29 para o 22, 4 para o 13), com 625.523 eleitores aptos. As 4 que foram para o 13 são médias ou grandes, e as 29 que foram para o 22 são quase todas pequenas. Os maiores: São Vicente (256 mil aptos, margem 2026 de 0,75 p.p.), Poá, Ribeirão Pires (0,15 p.p.) e Mongaguá.
 
-**Alternativas:** os 5.569 municípios com dado nos dois anos. Boa Esperança do Norte (MT) foi instalado depois de 2022 e fica fora da comparação.
+**Alternativas:** os 5.570 municípios com dado nos dois anos. Boa Esperança do Norte (MT) foi instalado depois de 2022 e fica fora. Empate não conta como virada (ex.: Marquinho-PR empatou em 2026).
 
 **Critérios do ranking nacional (TSE):**
 
@@ -33,7 +33,7 @@ subtitle: "Onde a eleição de 2030 vai ser decidida"
 | C4 | Volatilidade | \|margem 2026 − margem 2022\| | maior é melhor | 0,15 |
 | C5 | Abstenção 2026 | abstenções / aptos (voto a mobilizar) | maior é melhor | 0,15 |
 
-**Bloco SP:** C1 a C5 mais os quatro fatores do ISDEL (Educação, Densidade Empresarial, Tecido Empresarial, Gestão Pública). A leitura é de capacidade local: mais base empresarial e gestão estruturada significam mais associações comerciais, imprensa local e lideranças para levar a mensagem, ou seja, menor custo por eleitor alcançado. Os pesos ficam [a definir no grupo]. Proposta: 60% eleitoral e 40% ISDEL.
+**Bloco SP:** C1 a C5 mais os quatro fatores do ISDEL (Educação, Densidade Empresarial, Tecido Empresarial, Gestão Pública). A leitura é de capacidade local: mais base empresarial e gestão estruturada significam mais associações comerciais, imprensa local e lideranças para levar a mensagem, ou seja, menor custo por eleitor alcançado. Os pesos ficam [a definir no grupo]. Proposta: 60% eleitoral e 40% ISDEL. Nos fatores do ISDEL, quanto maior, melhor.
 
 **Dois rankings, como pede o enunciado:** (1) soma ponderada com normalização mín.–máx., no estilo do ISDEL; (2) PROMETHEE II com os mesmos critérios e pesos (fluxo líquido φ). Comparamos os dois: quem está no top 10 dos dois é aposta robusta, e quem aparece só em um é sensível ao método.
 
@@ -86,8 +86,8 @@ Regra do grupo: nenhum número vai para o vídeo sem sair do programa ou da font
 
 | # | Tempo | Quem fala | Fala (resumo) | Tela |
 |---|---|---|---|---|
-| 1 | 0:00–0:30 | André | "Em 2026, 310 municípios mudaram de lado. 9 milhões de eleitores. Se você coordena uma campanha, onde você vai em 2030?" | Capa → dual map 2022 × 2026 escurecendo os que não viraram |
-| 2 | 0:30–1:10 | André | Dor: 5.570 municípios, verba e agenda limitadas, custo de ir onde já está decidido. Decisor e decisão | Contador 5.570 → 310 → top 10, ícones de verba e agenda |
+| 1 | 0:00–0:30 | André | "Em 2026, 309 municípios mudaram de lado. 9 milhões de eleitores. Se você coordena uma campanha, onde você vai em 2030?" | Capa → dual map 2022 × 2026 escurecendo os que não viraram |
+| 2 | 0:30–1:10 | André | Dor: 5.570 municípios, verba e agenda limitadas, custo de ir onde já está decidido. Decisor e decisão | Contador 5.570 → 309 → top 10, ícones de verba e agenda |
 | 3 | 1:10–1:50 | Victor | Fontes oficiais: TSE (dados abertos) + IBGE (API) + ISDEL. Como validamos | Tabela de fontes, print do CSV, check de validação |
 | 4 | 1:50–2:30 | Victor | O que é o ISDEL e seus 4 fatores; por que entra no bloco SP | Infográfico dos 4 fatores, mapa ISDEL SP |
 | 5 | 2:30–3:30 | Vinícius | Código Python: leitura do ZIP, filtro 2º turno, margem, normalização, soma ponderada e PROMETHEE II (fórmula de φ na tela) | Tela do notebook com trechos destacados |
@@ -96,7 +96,7 @@ Regra do grupo: nenhum número vai para o vídeo sem sair do programa ou da font
 | 8 | 5:00–5:30 | Victor | Bloco SP: o que muda quando o ISDEL entra (São Vicente, Ribeirão Pires…) | Mapa SP, antes × depois |
 | 9 | 5:30–6:00 | André | Ganho: tempo [X h → Y min] e financeiro [cenário]. Limites: o passado não garante 2030 e o método é apartidário | Card de ganhos, link do app, créditos |
 
-**Capa (critério E):** fundo #0F0E0D, título serifado grande "Onde 2030 será decidida", dois meio-mapas do Brasil (2022 | 2026) em vermelho × azul, selo "310 municípios viraram". Sem rosto de candidato e sem logo de partido.
+**Capa (critério E):** fundo #0F0E0D, título serifado grande "Onde 2030 será decidida", dois meio-mapas do Brasil (2022 | 2026) em vermelho × azul, selo "309 municípios viraram". Sem rosto de candidato e sem logo de partido.
 
 **Descrição do vídeo:** "Ranking dos municípios brasileiros mais decisivos para a campanha presidencial de 2030, com dados abertos do TSE (2º turno 2022 e 2026) e malhas do IBGE. Dois métodos (soma ponderada e PROMETHEE II), mapas comparados e aplicação com o ISDEL em SP. GL304, Unicamp, 2026."
 
@@ -105,8 +105,8 @@ Regra do grupo: nenhum número vai para o vídeo sem sair do programa ou da font
 | Integrante | Tarefas | Prazo |
 |---|---|---|
 | André Traquia | Fusão TSE 2022 × 2026 (feito), critérios C1–C5, soma ponderada, cenas 1, 2, 7 e 9, edição final | 30/10 a [data de entrega] |
-| Vinícius [SOBRENOME] | PROMETHEE II, mapas (folium: coroplético, dual map, LayerControl, pins com popup), cenas 5 e 6 | 30/10 a [data] |
-| Victor Olivetti | ISDEL SP (junção por nome + validação 645/645), estatística descritiva e gráficos de barras, capa, cenas 3, 4 e 8 | 30/10 a [data] |
+| Vinícius de Souza Côrte Brilho | PROMETHEE II, mapas (folium: coroplético, dual map, LayerControl, pins com popup), cenas 5 e 6 | 30/10 a [data] |
+| Victor Olivetti Regina | ISDEL SP (junção por nome + validação 645/645), estatística descritiva e gráficos de barras, capa, cenas 3, 4 e 8 | 30/10 a [data] |
 
 Marcos: 30/10 base fundida e critérios fechados · [01/11] rankings e mapas · [03/11] gravação · [05/11] edição e revisão · [data de entrega do vídeo].
 
