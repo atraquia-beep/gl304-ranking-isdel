@@ -1,0 +1,118 @@
+/* Camada de vidro (a partir do Liquid Glass Kit do André) e movimento de entrada.
+   Fica por cima do app.css: só muda superfícies, seletores e animações. */
+:root {
+  --spring: cubic-bezier(.34, 1.56, .64, 1);
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --g-fill: linear-gradient(145deg, rgba(255,255,255,.62), rgba(255,255,255,.34) 50%, rgba(255,255,255,.48));
+  --g-line: rgba(255,255,255,.55);
+  --g-hi: rgba(255,255,255,.95);
+  --g-lo: rgba(255,255,255,.45);
+  --g-rim: linear-gradient(140deg, #fff, rgba(255,255,255,.2) 32%, rgba(255,255,255,.05) 58%, rgba(255,255,255,.8));
+  --g-cast: rgba(60,48,36,.16);
+  --thumb: linear-gradient(160deg, rgba(255,255,255,.95), rgba(255,255,255,.7));
+  --thumb-borda: rgba(255,255,255,.95);
+  --brilho13: rgba(201,48,58,.16); --brilho22: rgba(54,85,221,.16);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --g-fill: linear-gradient(145deg, rgba(255,255,255,.085), rgba(255,255,255,.02) 50%, rgba(255,255,255,.045));
+    --g-line: rgba(255,255,255,.09); --g-hi: rgba(255,255,255,.35); --g-lo: rgba(255,255,255,.1);
+    --g-rim: linear-gradient(140deg, rgba(255,255,255,.45), rgba(255,255,255,.06) 32%, rgba(255,255,255,.015) 58%, rgba(255,255,255,.25));
+    --g-cast: rgba(0,0,0,.45);
+    --thumb: linear-gradient(160deg, rgba(92,88,104,.75), rgba(44,42,52,.7)); --thumb-borda: rgba(255,255,255,.2);
+    --brilho13: rgba(229,72,77,.13); --brilho22: rgba(91,123,255,.13);
+  }
+}
+:root[data-theme="dark"] {
+  --g-fill: linear-gradient(145deg, rgba(255,255,255,.085), rgba(255,255,255,.02) 50%, rgba(255,255,255,.045));
+  --g-line: rgba(255,255,255,.09); --g-hi: rgba(255,255,255,.35); --g-lo: rgba(255,255,255,.1);
+  --g-rim: linear-gradient(140deg, rgba(255,255,255,.45), rgba(255,255,255,.06) 32%, rgba(255,255,255,.015) 58%, rgba(255,255,255,.25));
+  --g-cast: rgba(0,0,0,.45);
+  --thumb: linear-gradient(160deg, rgba(92,88,104,.75), rgba(44,42,52,.7)); --thumb-borda: rgba(255,255,255,.2);
+  --brilho13: rgba(229,72,77,.13); --brilho22: rgba(91,123,255,.13);
+}
+
+/* Cena: dois brilhos (13 à esquerda, 22 à direita) e um feixe de luz atrás do vidro */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(42vw 42vw at 6% 30%, var(--brilho13), transparent 70%),
+    radial-gradient(42vw 42vw at 96% 72%, var(--brilho22), transparent 70%),
+    linear-gradient(115deg, transparent 38%, rgba(255,255,255,.035) 48%, transparent 58%);
+}
+body { isolation: isolate; }
+
+/* Superfícies de vidro */
+.painel, .mapa-wrap, .legenda, .pilula, .zoom button, .icone, #play, .tabs, .seg, .anos, .abas, dialog, .card {
+  background: var(--g-fill);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  backdrop-filter: blur(14px) saturate(150%);
+  border: 0;
+  box-shadow:
+    inset 0 0 0 1px var(--g-line),
+    inset 1.5px 1.5px 1px -.5px var(--g-hi),
+    inset -1.5px -1.5px 1px -.5px var(--g-lo),
+    0 18px 40px -18px var(--g-cast);
+}
+.painel::after, .mapa-wrap::after, .legenda::after, .pilula::after, .tabs::after, .seg::after, .anos::after, .card::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.2px; pointer-events: none;
+  background: var(--g-rim);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude;
+}
+.painel, .icone, #play { position: relative; }
+.painel, .mapa-wrap { border-radius: 18px; }
+.mapa-wrap > * { z-index: 1; }
+#mapa { z-index: 0; }
+
+/* Seletores: botão ativo fica transparente, o polegar de vidro desliza por baixo */
+.tabs, .seg, .anos { position: relative; isolation: isolate; }
+.tabs button, .seg button, .anos button { position: relative; z-index: 1; transition: color .3s var(--ease); }
+.tabs button[aria-pressed="true"], .seg button[aria-pressed="true"], .anos button[aria-pressed="true"] { background: none; box-shadow: none; }
+.thumb {
+  position: absolute; left: 0; top: 0; z-index: 0; border-radius: 999px; pointer-events: none;
+  background: var(--thumb); border: 1px solid var(--thumb-borda);
+  box-shadow: inset 1.5px 1.5px 1px -.5px rgba(255,255,255,.7), 0 6px 14px -6px var(--g-cast);
+  transition: transform .55s var(--spring), width .45s var(--spring), opacity .2s;
+}
+.thumb.squish { animation: squish .55s var(--ease); }
+@keyframes squish { 0% { scale: 1; } 35% { scale: 1.16 .86; } 70% { scale: .96 1.05; } 100% { scale: 1; } }
+
+/* Toque com mola nos botões */
+button { transition: transform .25s var(--spring), background-color .2s, color .2s; }
+button:active:not(:disabled) { transform: scale(.95); }
+.sugestoes button:hover, .rank button:hover { background: var(--g-fill); }
+
+/* Barra do placar: brilho de vidro por cima */
+.barra { box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 6px 18px -8px var(--g-cast); }
+.barra::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(180deg, rgba(255,255,255,.28), transparent 55%); pointer-events: none; }
+.barra i { transition: width .9s var(--spring); }
+
+/* Entrada da página: painéis sobem em cascata */
+@keyframes cardIn { from { opacity: 0; transform: translateY(22px) scale(.975); } }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); filter: blur(5px); } }
+@keyframes fillIn { from { width: 0; } }
+@keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.96); } }
+.placar { animation: rise .7s var(--ease) both; }
+.col > *, .mapa-wrap, .tempo { animation: cardIn .8s var(--ease) both; }
+.esq > :nth-child(1) { animation-delay: .08s; } .esq > :nth-child(2) { animation-delay: .2s; }
+.mapa-wrap { animation-delay: .14s; } .tempo { animation-delay: .3s; }
+.dir > :nth-child(1) { animation-delay: .22s; } .dir > :nth-child(2) { animation-delay: .32s; }
+.rank.entra li { animation: rise .5s var(--ease) both; }
+.rank.entra li:nth-child(n) { animation-delay: calc(var(--i, 0) * 1ms); }
+.rank.entra li:nth-child(1) { --i: 0; } .rank.entra li:nth-child(2) { --i: 45; } .rank.entra li:nth-child(3) { --i: 90; } .rank.entra li:nth-child(4) { --i: 135; } .rank.entra li:nth-child(5) { --i: 180; }
+.rank.entra li:nth-child(6) { --i: 225; } .rank.entra li:nth-child(7) { --i: 270; } .rank.entra li:nth-child(8) { --i: 315; } .rank.entra li:nth-child(9) { --i: 360; } .rank.entra li:nth-child(10) { --i: 405; }
+.rank.entra .b i { animation: fillIn .9s var(--ease) both; animation-delay: calc(var(--i, 0) * 1ms + 120ms); }
+.ufbars .trilho i { animation: fillIn .8s var(--ease) both; }
+.resposta:not([hidden]) { animation: pop .45s var(--spring) both; }
+.card:not([hidden]) { animation: pop .45s var(--spring) both; }
+.pilula { transition: opacity .3s; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .painel, .mapa-wrap, .legenda, .pilula, .zoom button, .icone, #play, .tabs, .seg, .anos, .abas, dialog, .card {
+    background: var(--painel); -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+}
