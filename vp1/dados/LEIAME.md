@@ -6,7 +6,7 @@ Municípios que trocaram o vencedor do 2º turno presidencial entre 2022 (13 Lul
 
 ```
 python vp1/dados/coletar.py     # baixa e cacheia em vp1/dados/_cache/ (fora do git)
-python vp1/dados/montar.py      # gera sp.json, br.json, sp-municipios.topo.json (usa npx mapshaper)
+python vp1/dados/montar.py      # gera sp.json, br.json, sp-municipios.topo.json, br-municipios.topo.json (usa npx mapshaper)
 python vp1/dados/test_montar.py # checagens
 ```
 
@@ -21,6 +21,7 @@ python vp1/dados/test_montar.py # checagens
 | Totais oficiais por UF, 2026 (portal de resultados, só para checagem) | https://resultados.tse.jus.br/oficial/ele2026/6258/dados/sp/sp-c0001-e006258-u.json (trocar `sp` pela UF) |
 | Lista de municípios e população Censo 2022 (IBGE, SIDRA tabela 4714) | https://apisidra.ibge.gov.br/values/t/4714/n6/all/v/93/p/2022 |
 | Malha municipal de SP 2022 (IBGE) | https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2022/UFs/SP/SP_Municipios_2022.zip |
+| Malha municipal do Brasil 2022 (IBGE) | https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2022/Brasil/BR/BR_Municipios_2022.zip |
 | ISDEL SP (cópia do professor) | https://drive.google.com/uc?export=download&id=1OWOpjw4lU9fN2JYNEYhjM16LFqla0x7_ |
 
 Uso só o arquivo `_BR.csv` de cada zip do TSE (cargos federais), filtrado em `NR_TURNO=2`, `CD_CARGO=1` (Presidente), sem o exterior (`SG_UF=ZZ`). Linhas de voto em trânsito entram na soma do município.
@@ -45,11 +46,14 @@ O TSE usa código de município próprio. Casei por UF + nome normalizado (sem a
 
 ## ISDEL
 
-A planilha tem 646 linhas para 645 municípios: a linha extra é o cabeçalho (não há duplicata; os 645 nomes são únicos). Chave por nome; 643 casaram direto e 2 à mão (Florínia → Florínea, São Luís → São Luiz do Paraitinga). Colunas usadas: `educacao` = Educação, `densidade` = Densidade Empresarial, `tecido` = **Tecido Social** (a planilha também tem Tecido Empresarial; confirmar qual o André quer), `gestao` = Gestão Pública, `isdel` = ISDEL.
+A planilha tem 646 linhas para 645 municípios: a linha extra é o cabeçalho (não há duplicata; os 645 nomes são únicos). Chave por nome; 643 casaram direto e 2 à mão (Florínia → Florínea, São Luís → São Luiz do Paraitinga). Colunas usadas: `educacao` = Educação, `densidade` = Densidade Empresarial, `tecido` = Tecido Empresarial (a planilha também tem Tecido Social, que não entra), `gestao` = Gestão Pública, `isdel` = ISDEL.
 
-## Malha
+## Malhas
 
-`sp-municipios.topo.json`: shapefile IBGE 2022 → TopoJSON (mapshaper 0.6.102, simplificação 4% com `keep-shapes`, quantização 1e5), camada `municipios`, propriedade `ibge` (inteiro). 290 KB, 645 polígonos, mesmos códigos do `sp.json`.
+Shapefiles IBGE 2022 → TopoJSON (mapshaper 0.6.102, `keep-shapes`, quantização 1e5), camada `municipios`, propriedade `ibge` (inteiro), polígonos na mesma ordem do array `ibge` do JSON correspondente (teste `test_malhas_casam_com_json`).
+
+- `sp-municipios.topo.json`: simplificação 4%, 645 polígonos.
+- `br-municipios.topo.json`: simplificação 0,6%, 5.570 polígonos. A malha do IBGE tem 5.572 feições; saem as Lagoas dos Patos (4300001) e Mirim (4300002), que não são municípios. Na simplificação, 18 cruzamentos entre bordas não puderam ser reparados; isso não aparece no mapa nessa escala.
 
 ## Checagens
 

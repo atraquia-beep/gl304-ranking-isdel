@@ -28,7 +28,7 @@ DEPARA_MANUAL = {
 ISDEL_MANUAL = {"Florínia": "Florínea", "São Luís do Paraitinga": "São Luiz do Paraitinga"}
 # colunas do ISDEL usadas no site (chave no JSON -> coluna na planilha)
 ISDEL_COLS = {"educacao": "Educação", "densidade": "Densidade Empresarial",
-              "tecido": "Tecido Social", "gestao": "Gestão Pública", "isdel": "ISDEL"}
+              "tecido": "Tecido Empresarial", "gestao": "Gestão Pública", "isdel": "ISDEL"}
 FONTES = {
     "tse_2026": "https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_candidato_munzona/votacao_candidato_munzona_2026.zip",
     "tse_2022": "https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_candidato_munzona/votacao_candidato_munzona_2022.zip",
@@ -130,10 +130,11 @@ if __name__ == "__main__":
     sp = br[br.ibge // 100000 == 35].reset_index(drop=True)
     salvar(colunar(br), "br.json")
     salvar(colunar(sp, isdel_sp(sp)), "sp.json")
-    # malha IBGE -> TopoJSON simplificado (precisa de node/npx)
-    subprocess.run(["npx", "-y", "mapshaper@0.6.102", str(CACHE / "SP_Municipios_2022/SP_Municipios_2022.shp"),
-                    "encoding=utf8", "-each", "ibge=+CD_MUN", "-filter-fields", "ibge", "-rename-layers", "municipios",
-                    "-simplify", "4%", "keep-shapes", "-o", "format=topojson", "quantization=1e5",
-                    str(AQUI / "sp-municipios.topo.json")], check=True)
+    # malhas IBGE -> TopoJSON simplificado (precisa de node/npx); 4300001/4300002 são as lagoas dos Patos e Mirim
+    for uf, pct, saida in [("SP", "4%", "sp-municipios.topo.json"), ("BR", "0.6%", "br-municipios.topo.json")]:
+        subprocess.run(["npx", "-y", "mapshaper@0.6.102", str(CACHE / f"{uf}_Municipios_2022/{uf}_Municipios_2022.shp"),
+                        "encoding=utf8", "-each", "ibge=+CD_MUN", "-filter", "ibge!=4300001 && ibge!=4300002",
+                        "-filter-fields", "ibge", "-rename-layers", "municipios", "-simplify", pct, "keep-shapes",
+                        "-sort", "ibge", "-o", "format=topojson", "quantization=1e5", str(AQUI / saida)], check=True)
     print("sem par TSE<->IBGE (fora):", sem_par)
     print(f"BR n={len(br)} viraram={br.virou.sum()} | SP n={len(sp)} viraram={sp.virou.sum()}")

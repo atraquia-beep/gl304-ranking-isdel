@@ -18,6 +18,8 @@ FONTES = {
     "sidra_4714.json": "https://apisidra.ibge.gov.br/values/t/4714/n6/all/v/93/p/2022",
     # IBGE: malha municipal 2022 de SP (shapefile)
     "SP_Municipios_2022.zip": "https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2022/UFs/SP/SP_Municipios_2022.zip",
+    # IBGE: malha municipal 2022 do Brasil (shapefile, ~200 MB)
+    "BR_Municipios_2022.zip": "https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2022/Brasil/BR/BR_Municipios_2022.zip",
     # ISDEL SP (cópia do professor)
     "isdel_sp.xlsx": "https://drive.google.com/uc?export=download&id=1OWOpjw4lU9fN2JYNEYhjM16LFqla0x7_",
 }
@@ -50,5 +52,6 @@ if __name__ == "__main__":
     for z, membro in EXTRAIR.items():
         if not (CACHE / membro).exists():
             zipfile.ZipFile(CACHE / z).extract(membro, CACHE)
-    zipfile.ZipFile(CACHE / "SP_Municipios_2022.zip").extractall(CACHE / "SP_Municipios_2022")
+    for uf in ("SP", "BR"):
+        zipfile.ZipFile(CACHE / f"{uf}_Municipios_2022.zip").extractall(CACHE / f"{uf}_Municipios_2022")
     print("ok:", sorted(p.name for p in CACHE.iterdir()))

@@ -36,6 +36,12 @@ def test_total_sp_2022_igual_tse():
     assert sum(sp["t22"]["22"]) == 14216587
 
 
+def test_malhas_casam_com_json():
+    for nome, d in (("sp-municipios.topo.json", sp), ("br-municipios.topo.json", br)):
+        t = json.loads((AQUI / nome).read_text(encoding="utf-8"))
+        assert [g["properties"]["ibge"] for g in t["objects"]["municipios"]["geometries"]] == d["ibge"]
+
+
 def test_virou_coerente():
     for d in (sp, br):
         for v, a, b in zip(d["virou"], d["margem22"], d["margem26"]):
