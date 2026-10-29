@@ -7,7 +7,7 @@ export const SUGESTOES = ['Quais viraram em MG', 'Top 10 em SP', 'Margem menor q
 
 export const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 
-// q: texto; br/sp: {d, uf[]} (br pode faltar); rank: {prom, soma} = índices de SP em ordem.
+// q: texto; br/sp: {d, uf[]} (br pode faltar); rank: {br, sp}, cada um {prom, soma} = índices em ordem (bloco pode faltar).
 // Devolve {escopo, idx, total, titulo} ou null se nenhuma regra reconhecer a pergunta.
 export function perguntar(q, { br, sp, rank }) {
   const t = ' ' + norm(q) + ' ', partes = [];
@@ -20,11 +20,12 @@ export function perguntar(q, { br, sp, rank }) {
   const n = +(t.match(/ top ?(\d+) /)?.[1] || t.match(/ (\d+) (?:maiores|menores|primeir|mais) /)?.[1] || 0);
   const maiores = / maior(es)? (cidades|municipios)| maiores /.test(t) && !/ margem maior /.test(t), menores = / menores /.test(t);
 
-  // Ranking de SP (único lugar com ISDEL)
-  if (/ (top|ranking|prioridade)/.test(t) && !maiores && !menores && rank) {
+  // Ranking: SP (com ISDEL) quando a pergunta cita SP; senão, Brasil
+  const bl = uf === 'SP' || !rank?.br ? 'sp' : 'br';
+  if (/ (top|ranking|prioridade)/.test(t) && !maiores && !menores && rank?.[bl]) {
     const metodo = / soma /.test(t) ? 'soma' : 'prom';
     const k = n || 10;
-    return { escopo: 'sp', idx: rank[metodo].slice(0, k), total: k, titulo: `Top ${k} do ranking de SP (${metodo === 'soma' ? 'soma ponderada' : 'PROMETHEE II'})` };
+    return { escopo: bl, idx: rank[bl][metodo].slice(0, k), total: k, titulo: `Top ${k} do ranking ${bl === 'sp' ? 'de SP' : 'do Brasil'} (${metodo === 'soma' ? 'soma ponderada' : 'PROMETHEE II'})` };
   }
 
   const base = br || sp, d = base.d, f = [];
