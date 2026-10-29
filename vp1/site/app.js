@@ -1,5 +1,6 @@
 import { decodeTopo } from './calc.js';
 import { perguntar, SUGESTOES } from './pergunta.js';
+import { contar, contarTudo } from './motion.js';
 
 const $ = s => document.querySelector(s);
 const nf = new Intl.NumberFormat('pt-BR');
@@ -187,17 +188,20 @@ function placar() {
   const { s, d } = E(), st = sInterp(s), tot = st[13] + st[22], a = S.t < 0.5 ? 0 : 1, c = CAND[a];
   $('#nm13').textContent = c[13]; $('#nm22').textContent = c[22];
   $('#b13').style.width = (100 * st[13] / tot) + '%'; $('#b22').style.width = (100 * st[22] / tot) + '%';
-  $('#v13').textContent = `${dec(100 * st[13] / tot)}% · ${mi(st[13])} votos`;
-  $('#v22').textContent = `${dec(100 * st[22] / tot)}% · ${mi(st[22])} votos`;
-  $('#frase').textContent = `${nf.format(d.virou.reduce((x, v) => x + v, 0))} municípios viraram de lado`;
+  const so = { instantaneo: S.t > 0 && S.t < 1 };  // arrastando a linha do tempo: sem contagem
+  contar($('#v13'), `${dec(100 * st[13] / tot)}% · ${mi(st[13])} votos`, so);
+  contar($('#v22'), `${dec(100 * st[22] / tot)}% · ${mi(st[22])} votos`, so);
+  contar($('#frase'), `${nf.format(d.virou.reduce((x, v) => x + v, 0))} municípios viraram de lado`, so);
   document.querySelectorAll('[data-ano]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.ano === a && (S.t === 0 || S.t === 1))));
   $('#t').value = Math.round(S.t * 1000);
   $('#t-rot').textContent = S.t === 0 ? '2022' : S.t === 1 ? '2026' : `transição · ${Math.round(S.t * 100)}%`;
   // Legenda: contagem por lado no ano exibido + 4 faixas
   const m = d.ibge.map((_, i) => mInterp(d, i)), n13 = m.filter(x => x > 0).length, n22 = m.filter(x => x < 0).length;
   const sw = cs => cs.map(x => `<i style="background:${x}"></i>`).join('');
+  const antes = [...document.querySelectorAll('#legenda .cont span')].map(e => e.textContent);
   $('#legenda').innerHTML = `<div class="cont"><span class="t13">${c[13]} ${nf.format(n13)}</span><span class="t22">${c[22]} ${nf.format(n22)}</span><span style="color:var(--mut);font-weight:400">municípios</span></div>` +
     `<div class="faixas"><small></small><small>até 10</small><small>25</small><small>45</small><small>+45</small><span class="t13">13</span>${sw(cor.f13)}<span class="t22">22</span>${sw(cor.f22)}</div>`;
+  document.querySelectorAll('#legenda .cont span').forEach((e, k) => antes[k] && contar(e, e.textContent, { de: antes[k], ...so }));
 }
 let anim = 0;
 function irPara(alvo) {
@@ -218,6 +222,8 @@ function ranking() {
   if (!R) { $('#rank').innerHTML = ''; $('#rank-nota').textContent = 'Ranking indisponível: vp1/notebook/ranking.json não carregou.'; return; }
   const ord = R[S.met].slice(0, 10), nota = R.nota[S.met], lo = Math.min(...nota), hi = nota[ord[0]];
   $('#rank').innerHTML = ord.map(i => `<li><button type="button" data-i="${i}"${i === S.sel ? ' aria-current="true"' : ''}><span class="p">${R.pos[S.met][i]}</span><span>${esc(nomes[i])}</span><span class="v">${S.met === 'phi' ? 'φ ' : ''}${dec(nota[i], 3)}</span><span class="b"><i style="width:${100 * (nota[i] - lo) / (hi - lo || 1)}%"></i></span></button></li>`).join('');
+  const chave = S.esc + S.met;
+  if (chave !== ranking.k) { ranking.k = chave; $('#rank').classList.remove('entra'); void $('#rank').offsetWidth; $('#rank').classList.add('entra'); contarTudo($('#rank'), '.v', 45); }
   const outro = S.met === 'soma' ? 'phi' : 'soma', comuns = ord.filter(i => R.pos[outro][i] <= 10).length;
   $('#rank-nota').textContent = `${comuns} de 10 também estão no top 10 do ${outro === 'phi' ? 'PROMETHEE II' : 'soma ponderada'}. ${S.esc === 'sp' ? 'Bloco SP: inclui o ISDEL.' : 'Brasil: 5 critérios eleitorais.'}`;
 }
@@ -227,6 +233,7 @@ document.querySelectorAll('[data-met]').forEach(b => b.onclick = () => { S.met =
 const delta = s => margemT(s, 1) - margemT(s, 0);
 const dTxt = x => `<span class="${x > 0 ? 't13' : 't22'}">${x > 0 ? '13' : '22'} +${dec(Math.abs(100 * x))}</span>`;
 function mudou() {
+  queueMicrotask(() => { contarTudo($('#regioes'), 'li > span', 60); contarTudo($('#ufbars'), '.n', 15); });
   const { d, ufs, s, nomes } = E();
   if (S.esc === 'br') {
     const reg = Object.entries(REGIAO).map(([c, nome]) => [nome, totais(d, d.ibge.map((_, i) => i).filter(i => String(d.ibge[i])[0] === c))]);
@@ -292,9 +299,10 @@ function responder(q) {
   if (r.escopo !== S.esc) trocarEscopo(r.escopo);
   S.realce = new Set(r.idx); redesenhar();
   const { d, nomes } = E(), mais = r.idx.length - 10;
-  out.innerHTML = `<p class="tit">${esc(r.titulo)}</p><p class="num">${nf.format(r.total)} <small>município${r.total === 1 ? '' : 's'} acesos no mapa</small></p>` +
+  out.innerHTML = `<p class="tit">${esc(r.titulo)}</p><p class="num"><span class="n">${nf.format(r.total)}</span> <small>município${r.total === 1 ? '' : 's'} acesos no mapa</small></p>` +
     `<ol>${r.idx.slice(0, 10).map(i => `<li><button type="button" data-i="${i}"><span>${esc(nomes[i])}</span><small>${lado(d.margem22[i])}→${lado(d.margem26[i])} · ${pp(d.margem26[i])}</small></button></li>`).join('')}</ol>` +
     (mais > 0 ? `<p class="nota">e mais ${nf.format(mais)}.</p>` : '') + '<button type="button" class="limpar">Limpar</button>';
+  contarTudo(out, '.num .n');
 }
 $('#pergunta').addEventListener('submit', e => { e.preventDefault(); responder($('#q').value); });
 $('#sugestoes').innerHTML = SUGESTOES.map(s => `<button type="button">${s}</button>`).join('');
