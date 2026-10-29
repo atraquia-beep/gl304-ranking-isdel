@@ -47,6 +47,7 @@ function bloco(d, nb, local) {
   if (!doNb) { if (!local) return null; [soma, phi] = local(); }
   const ordSoma = ordem(soma, d.nome), ordProm = ordem(phi, d.nome), posSoma = [], posProm = [];
   ordSoma.forEach((i, k) => posSoma[i] = k + 1); ordProm.forEach((i, k) => posProm[i] = k + 1);
+  if (doNb) { const ps = col('pos_soma'), pp = col('pos_phi'); if (ps && pp) { ps.forEach((v, i) => posSoma[i] = v); pp.forEach((v, i) => posProm[i] = v); } }  // empates: vale a posição do notebook
   return { soma, phi, ordSoma, ordProm, posSoma, posProm, doNb, top10: new Set([...ordSoma.slice(0, 10), ...ordProm.slice(0, 10)]),
     comuns: ordSoma.slice(0, 10).filter(i => posProm[i] <= 10).length, idx: new Map(d.ibge.map((c, i) => [c, i])) };
 }
