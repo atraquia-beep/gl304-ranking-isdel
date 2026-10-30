@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Faustina:wght@500;600;700&family=Geist:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="app.css">
-<link rel="stylesheet" href="glass.css">
+<link rel="stylesheet" href="hud.css">
 <script>try { var t = localStorage.getItem('tema'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
 <body data-aba="mapa">
@@ -24,17 +24,22 @@
 </header>
 
 <section class="placar" aria-label="Placar">
-  <div class="lado l13"><span class="nm" id="nm13">Lula</span> <span class="num">13</span></div>
-  <p class="frase" id="frase"></p>
-  <div class="lado l22"><span class="num">22</span> <span class="nm" id="nm22">Flávio</span></div>
-  <div class="barra" aria-hidden="true"><i id="b13"></i><i id="b22"></i><span class="meio"></span></div>
-  <p class="val v13" id="v13"></p>
-  <div class="anos" role="group" aria-label="Ano">
-    <button type="button" data-ano="0" aria-pressed="false">2022</button>
-    <button type="button" data-ano="1" aria-pressed="true">2026</button>
+  <div class="cab">
+    <div class="lado l13"><span class="nm" id="nm13">Lula</span> <span class="num">13</span></div>
+    <p class="frase" id="frase"></p>
+    <div class="lado l22"><span class="num">22</span> <span class="nm" id="nm22">Flávio</span></div>
   </div>
-  <p class="val v22" id="v22"></p>
-  <p class="apurado"><span></span>100% apurado · TSE</p>
+  <div class="barra" aria-hidden="true">
+    <i id="b13"><strong id="v13"></strong><small id="vv13"></small></i><i id="b22"><small id="vv22"></small><strong id="v22"></strong></i>
+    <span class="meio">50%</span>
+  </div>
+  <div class="sub">
+    <div class="anos" role="group" aria-label="Ano">
+      <button type="button" data-ano="0" aria-pressed="false">2022</button>
+      <button type="button" data-ano="1" aria-pressed="true">2026</button>
+    </div>
+    <p class="apurado"><b>100%</b> apurado</p>
+  </div>
 </section>
 
 <main class="grade">
@@ -76,7 +81,11 @@
     </div>
   </section>
 
-  <aside class="col dir" aria-label="Perguntas e município">
+  <aside class="col dir" aria-label="Regiões, perguntas e município">
+    <section class="painel">
+      <h2>Por região</h2>
+      <ol class="porreg" id="porreg"></ol>
+    </section>
     <section class="painel">
       <h2>Pergunte ao mapa</h2>
       <form id="pergunta" role="search">
@@ -92,7 +101,7 @@
 </main>
 
 <footer class="rodape">
-  <span>André Traquia, Vinícius de Souza Côrte Brilho e Victor Olivetti Regina · GL304 Unicamp</span>
+  <span><i class="ponto"></i>André Traquia, Vinícius de Souza Côrte Brilho e Victor Olivetti Regina · GL304 Unicamp</span>
   <span>Dados do TSE e do IBGE</span>
   <button type="button" class="link" id="abre-metodo">Método</button>
   <a class="link" href="https://colab.research.google.com/github/atraquia-beep/gl304-ranking-isdel/blob/main/vp1/notebook/GL304_VP1.ipynb" target="_blank" rel="noopener">Notebook no Colab ↗</a>

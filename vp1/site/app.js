@@ -88,7 +88,7 @@ function desenhar() {
   const { d, mun, ufs, P } = E(), dpr = devicePixelRatio || 1, w = wrap.clientWidth, h = wrap.clientHeight;
   if (!w || !h) return;
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
-  const comCallout = S.esc === 'br', padR = comCallout ? 74 : 16, padT = 52, padB = celular.matches ? 92 : 16;
+  const comCallout = S.esc === 'br', padR = comCallout ? 74 : 16, padT = 52, padB = celular.matches ? 92 : 118;
   const s0 = Math.min((w - 16 - padR) / P.W, (h - padT - padB) / P.H);
   base = { s: s0, ox: 16 + (w - 16 - padR - P.W * s0) / 2, oy: padT + (h - padT - padB - P.H * s0) / 2, w, h };
   const { k, x, y } = S.view, s = s0 * k;
@@ -189,8 +189,8 @@ function placar() {
   $('#nm13').textContent = c[13]; $('#nm22').textContent = c[22];
   $('#b13').style.width = (100 * st[13] / tot) + '%'; $('#b22').style.width = (100 * st[22] / tot) + '%';
   const so = { instantaneo: S.t > 0 && S.t < 1 };  // arrastando a linha do tempo: sem contagem
-  contar($('#v13'), `${dec(100 * st[13] / tot)}% · ${mi(st[13])} votos`, so);
-  contar($('#v22'), `${dec(100 * st[22] / tot)}% · ${mi(st[22])} votos`, so);
+  contar($('#v13'), `${dec(100 * st[13] / tot, 2)}%`, so); contar($('#vv13'), `${nf.format(st[13])} votos`, so);
+  contar($('#v22'), `${dec(100 * st[22] / tot, 2)}%`, so); contar($('#vv22'), `${nf.format(st[22])} votos`, so);
   contar($('#frase'), `${nf.format(d.virou.reduce((x, v) => x + v, 0))} municípios viraram de lado`, so);
   document.querySelectorAll('[data-ano]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.ano === a && (S.t === 0 || S.t === 1))));
   $('#t').value = Math.round(S.t * 1000);
@@ -247,6 +247,20 @@ function mudou() {
     const mx = Math.abs(linhas[0][1]);
     $('#ufbars').innerHTML = linhas.map(([i, x]) => `<li style="grid-template-columns:7.5em 1fr 3.6em"><span title="${esc(d.nome[i])}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(d.nome[i])}</span><span class="trilho"><i style="${x > 0 ? 'left:50%' : 'right:50%'};width:${50 * Math.abs(x) / mx}%;background:var(${x > 0 ? '--c13' : '--c22'})"></i></span><span class="n">${x > 0 ? '+' : '−'}${dec(Math.abs(100 * x))}</span></li>`).join('');
   }
+}
+
+// Por região: quem venceu em 2026, com quanto, barra com marca de 50% e variação desde 2022
+function porRegiao() {
+  const { d, s } = E();
+  const linhas = S.esc === 'br'
+    ? [['Brasil', s], ...Object.entries(REGIAO).map(([c, n]) => [{ N: 'Norte', NE: 'Nordeste', SE: 'Sudeste', S: 'Sul', CO: 'Centro-Oeste' }[n], totais(d, d.ibge.map((_, i) => i).filter(i => String(d.ibge[i])[0] === c))])]
+    : [['São Paulo', s], ['Capital', totais(d, d.nome.map((n, i) => i).filter(i => d.nome[i] === 'São Paulo'))], ['Interior', totais(d, d.nome.map((n, i) => i).filter(i => d.nome[i] !== 'São Paulo'))]];
+  $('#porreg').innerHTML = linhas.map(([nome, st]) => {
+    const t = st[1][13] + st[1][22], p13 = st[1][13] / t, v = p13 >= .5 ? 13 : 22, pv = v === 13 ? p13 : 1 - p13;
+    const dl = 100 * (delta(st) / 2) * (v === 13 ? 1 : -1);
+    return `<li><span class="anel" aria-hidden="true"><i>100</i></span><span class="rn">${nome}</span><span class="rv t${v}"><b class="tag">${v}</b><span class="pc">${dec(100 * pv)}%</span></span><span class="rd">${dl >= 0 ? '+' : '−'}${dec(Math.abs(dl))}</span><span class="rb"><i style="width:${100 * p13}%"></i><em></em></span></li>`;
+  }).join('');
+  queueMicrotask(() => contarTudo($('#porreg'), '.pc', 50));
 }
 
 // Seleção: card do município ou do estado, e pílula
@@ -324,7 +338,7 @@ function trocarEscopo(k) {
   document.querySelectorAll('[data-esc]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.esc === k)));
   $('#municipios').innerHTML = E().nomes.map(n => `<option value="${esc(n)}">`).join('');
   $('#card').hidden = true; $('#resposta').hidden = true;
-  placar(); ranking(); mudou(); pilula(); redesenhar();
+  placar(); ranking(); mudou(); porRegiao(); pilula(); redesenhar();
 }
 document.querySelectorAll('[data-esc]').forEach(b => b.onclick = () => trocarEscopo(b.dataset.esc));
 
