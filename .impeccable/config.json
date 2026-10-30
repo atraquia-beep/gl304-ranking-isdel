@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "vp1/site/hud.css"
+        ],
+        "createdAt": "2026-10-30T00:01:29.798Z",
+        "reason": "Claude: é o filete verde de '100% apurado' na base do placar, réplica intencional do HUD do seuimposto pedido pelo André"
+      }
+    ]
+  }
+}
