@@ -46,7 +46,7 @@ h2 { font-family: var(--serif); font-weight: 600; font-size: 1.15rem; margin: 0 
 .l13 { color: var(--c13); } .l22 { color: var(--c22); justify-content: flex-end; }
 .frase { margin: 0; font-family: var(--serif); font-weight: 600; font-size: clamp(1.15rem, 2.4vw, 1.7rem); text-align: center; }
 .barra { grid-column: 1 / -1; position: relative; display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--neutro); }
-.barra i { display: block; height: 100%; transition: width .5s ease; }
+.barra > i { display: block; height: 100%; transition: width .5s ease; }
 #b13 { background: var(--c13); } #b22 { background: var(--c22); margin-left: auto; }
 .barra .meio { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 2px; background: var(--fg); transform: translateX(-1px); }
 .anos { justify-self: center; }
@@ -163,4 +163,4 @@ dialog form button { margin-top: 12px; border: 0; border-radius: 10px; padding: 
   .logo { font-size: .95rem; }
   .tabs button { padding: 4px 9px; }
 }
-@media (prefers-reduced-motion: reduce) { .barra i { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .barra > i { transition: none; } }

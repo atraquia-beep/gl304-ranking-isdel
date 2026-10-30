@@ -187,7 +187,7 @@ const mi = x => x >= 1e6 ? dec(x / 1e6) + ' mi' : nf.format(Math.round(x));
 function placar() {
   const { s, d } = E(), st = sInterp(s), tot = st[13] + st[22], a = S.t < 0.5 ? 0 : 1, c = CAND[a];
   $('#nm13').textContent = c[13]; $('#nm22').textContent = c[22];
-  $('#b13').style.width = (100 * st[13] / tot) + '%'; $('#b22').style.width = (100 * st[22] / tot) + '%';
+  $('#b13').style.width = (100 * st[13] / tot) + '%'; $('#brasa').style.left = (100 * st[13] / tot) + '%'; $('#b22').style.width = (100 * st[22] / tot) + '%';
   const so = { instantaneo: S.t > 0 && S.t < 1 };  // arrastando a linha do tempo: sem contagem
   contar($('#v13'), `${dec(100 * st[13] / tot, 2)}%`, so); contar($('#vv13'), `${nf.format(st[13])} votos`, so);
   contar($('#v22'), `${dec(100 * st[22] / tot, 2)}%`, so); contar($('#vv22'), `${nf.format(st[22])} votos`, so);
