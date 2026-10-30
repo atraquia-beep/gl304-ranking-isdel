@@ -1,6 +1,7 @@
 import { decodeTopo } from './calc.js';
 import { perguntar, SUGESTOES } from './pergunta.js';
 import { contar, contarTudo } from './motion.js';
+import { montarApura } from './apura.js';
 
 const $ = s => document.querySelector(s);
 const nf = new Intl.NumberFormat('pt-BR');
@@ -88,7 +89,7 @@ function desenhar() {
   const { d, mun, ufs, P } = E(), dpr = devicePixelRatio || 1, w = wrap.clientWidth, h = wrap.clientHeight;
   if (!w || !h) return;
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
-  const comCallout = S.esc === 'br', padR = comCallout ? 74 : 16, padT = 52, padB = celular.matches ? 92 : 118;
+  const comCallout = S.esc === 'br', padR = comCallout ? 74 : 16, padT = 40, padB = celular.matches ? 92 : 20;
   const s0 = Math.min((w - 16 - padR) / P.W, (h - padT - padB) / P.H);
   base = { s: s0, ox: 16 + (w - 16 - padR - P.W * s0) / 2, oy: padT + (h - padT - padB - P.H * s0) / 2, w, h };
   const { k, x, y } = S.view, s = s0 * k;
@@ -303,27 +304,23 @@ function pilula() {
 }
 $('#pilula').onclick = e => { const i = e.currentTarget.dataset.i; if (i !== '') selecionar(+i); };
 
-// Pergunte ao mapa
+// Apura: o assistente responde e acende os municípios no mapa
 const blocoPerg = k => ({ d: ESC[k].d, uf: ESC[k].uf });
 function responder(q) {
   const rank = { br: ESC.br.rank && { prom: ESC.br.rank.phi, soma: ESC.br.rank.soma }, sp: ESC.sp.rank && { prom: ESC.sp.rank.phi, soma: ESC.sp.rank.soma } };
-  const r = perguntar(q, { br: blocoPerg('br'), sp: blocoPerg('sp'), rank }), out = $('#resposta');
-  out.hidden = false;
-  if (!r) { out.innerHTML = '<p class="tit">Não entendi. Dá para filtrar por estado, virada, vencedor, margem, maiores cidades ou top do ranking.</p>'; return; }
+  const r = perguntar(q, { br: blocoPerg('br'), sp: blocoPerg('sp'), rank });
+  if (!r) return null;
   if (r.escopo !== S.esc) trocarEscopo(r.escopo);
   S.realce = new Set(r.idx); redesenhar();
-  const { d, nomes } = E(), mais = r.idx.length - 10;
-  out.innerHTML = `<p class="tit">${esc(r.titulo)}</p><p class="num"><span class="n">${nf.format(r.total)}</span> <small>município${r.total === 1 ? '' : 's'} acesos no mapa</small></p>` +
-    `<ol>${r.idx.slice(0, 10).map(i => `<li><button type="button" data-i="${i}"><span>${esc(nomes[i])}</span><small>${lado(d.margem22[i])}→${lado(d.margem26[i])} · ${pp(d.margem26[i])}</small></button></li>`).join('')}</ol>` +
-    (mais > 0 ? `<p class="nota">e mais ${nf.format(mais)}.</p>` : '') + '<button type="button" class="limpar">Limpar</button>';
-  contarTudo(out, '.num .n');
+  const { d, nomes } = E(), mais = r.idx.length - 8;
+  return `<p class="tit">${esc(r.titulo)}</p><p class="num"><span class="n">${nf.format(r.total)}</span> <small>município${r.total === 1 ? '' : 's'} acesos no mapa</small></p>` +
+    `<ol>${r.idx.slice(0, 8).map(i => `<li><button type="button" data-i="${i}"><span>${esc(nomes[i])}</span><small>${lado(d.margem22[i])}→${lado(d.margem26[i])} · ${pp(d.margem26[i])}</small></button></li>`).join('')}</ol>` +
+    (mais > 0 ? `<p class="nota">e mais ${nf.format(mais)}.</p>` : '');
 }
-$('#pergunta').addEventListener('submit', e => { e.preventDefault(); responder($('#q').value); });
-$('#sugestoes').innerHTML = SUGESTOES.map(s => `<button type="button">${s}</button>`).join('');
-$('#sugestoes').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { $('#q').value = b.textContent; responder(b.textContent); } });
-$('#resposta').addEventListener('click', e => {
-  if (e.target.closest('.limpar')) { S.realce = null; $('#resposta').hidden = true; redesenhar(); $('#q').focus(); return; }
-  const b = e.target.closest('[data-i]'); if (b) { selecionar(+b.dataset.i); if (celular.matches) aba('mapa'); }
+const apura = montarApura({
+  responder, sugestoes: SUGESTOES,
+  limpar: () => { S.realce = null; redesenhar(); },
+  abrirMunicipio: i => { selecionar(i); if (celular.matches) aba('mapa'); },
 });
 const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 $('#busca').addEventListener('change', e => {
@@ -337,13 +334,14 @@ function trocarEscopo(k) {
   S.esc = k; S.sel = null; S.ufSel = null; S.realce = null; S.view = { k: 1, x: 0, y: 0 };
   document.querySelectorAll('[data-esc]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.esc === k)));
   $('#municipios').innerHTML = E().nomes.map(n => `<option value="${esc(n)}">`).join('');
-  $('#card').hidden = true; $('#resposta').hidden = true;
+  $('#card').hidden = true;
   placar(); ranking(); mudou(); porRegiao(); pilula(); redesenhar();
 }
 document.querySelectorAll('[data-esc]').forEach(b => b.onclick = () => trocarEscopo(b.dataset.esc));
 
 function aba(nome) {
   if (nome === 'metodo') { $('#metodo').showModal(); return; }
+  if (nome === 'perguntar') { apura.abrir(); return; }
   document.body.dataset.aba = nome;
   document.querySelectorAll('[data-aba]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.aba === nome)));
   if (nome === 'mapa') redesenhar();

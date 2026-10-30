@@ -1,0 +1,309 @@
+/* Apura: assistente do site. Orbe com olhos baseado no Sage do AI Admin Dashboard do André. */
+.orb {
+  --gx: -0.5;
+  --gy: -0.1;
+  --fx: 0.9;
+  --orb-glow: 88, 96, 246;
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  animation: orbFloat 4.2s ease-in-out var(--float-delay, 0s) infinite;
+}
+@keyframes orbFloat {
+  50% {
+    translate: 0 calc(var(--s) * -0.05);
+  }
+}
+.orb i {
+  position: absolute;
+  font-style: normal;
+}
+.orb-ball {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(75% 50% at 50% 100%, rgba(132, 228, 252, 0.95), rgba(132, 228, 252, 0) 72%),
+    radial-gradient(60% 60% at 47% 44%, #4334e6 0%, #4a43ee 42%, #646cf2 64%, #a2a8f8 82%, #e0defd 100%);
+  box-shadow:
+    0 calc(var(--s) * 0.16) calc(var(--s) * 0.36) calc(var(--s) * -0.1) rgba(var(--orb-glow), 0.62),
+    0 calc(var(--s) * 0.03) calc(var(--s) * 0.08) rgba(var(--orb-glow), 0.2);
+  transition:
+    translate 0.6s var(--ease),
+    rotate 0.6s var(--spring),
+    scale 0.5s var(--spring),
+    filter 0.6s ease;
+}
+/* slow drifting light inside the glass */
+.orb-swirl {
+  inset: -25%;
+  border-radius: 50%;
+  background:
+    radial-gradient(28% 24% at 36% 40%, rgba(122, 84, 255, 0.9), rgba(122, 84, 255, 0)),
+    radial-gradient(26% 22% at 66% 64%, rgba(90, 178, 255, 0.6), rgba(90, 178, 255, 0));
+  filter: blur(calc(var(--s) * 0.07));
+  animation: spin 9s linear infinite;
+}
+/* frosted rim */
+.orb-rim {
+  inset: 0;
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 calc(var(--s) * 0.07) calc(var(--s) * 0.015) rgba(255, 255, 255, 0.6),
+    inset 0 calc(var(--s) * 0.06) calc(var(--s) * 0.1) rgba(255, 255, 255, 0.35),
+    inset 0 calc(var(--s) * -0.05) calc(var(--s) * 0.12) rgba(150, 236, 255, 0.45);
+}
+.orb-shine {
+  left: 17%;
+  top: 9%;
+  width: 38%;
+  height: 22%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0));
+  rotate: -28deg;
+  opacity: 0.6;
+}
+
+/* ---------------- eyes (SVG, 100×100 user units) ---------------- */
+.orb-face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.orb-eyes {
+  translate: calc(var(--gx) * 11px) calc(var(--gy) * 8px);
+  filter: drop-shadow(0 0 1.6px rgba(255, 255, 255, 0.55));
+  transition: translate 0.34s var(--ease);
+}
+.orb-eye {
+  transition:
+    translate 0.45s var(--spring),
+    scale 0.45s var(--spring),
+    rotate 0.45s var(--spring);
+}
+.orb-lid {
+  scale: var(--fx) 1;
+  transition: scale 0.09s ease-out;
+}
+.orb.blink .orb-lid {
+  scale: var(--fx) 0.08;
+}
+.orb-pill {
+  fill: #fff;
+  transition:
+    scale 0.35s var(--spring),
+    opacity 0.2s ease;
+}
+.orb-arc {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 4.4;
+  stroke-linecap: round;
+  opacity: 0;
+  scale: 0.6 0.2;
+  transition:
+    scale 0.4s var(--spring),
+    opacity 0.2s ease;
+}
+
+/* ---------------- moods ---------------- */
+/* happy, excited, wink: pills fold into smiling arcs */
+.orb:is([data-mood='happy'], [data-mood='excited']) .orb-pill,
+.orb[data-mood='wink'] .orb-eye.l .orb-pill,
+.sage-fab:hover .orb .orb-pill {
+  opacity: 0;
+  scale: 1 0.1;
+}
+.orb:is([data-mood='happy'], [data-mood='excited']) .orb-arc,
+.orb[data-mood='wink'] .orb-eye.l .orb-arc,
+.sage-fab:hover .orb .orb-arc {
+  opacity: 1;
+  scale: 1;
+}
+.orb[data-mood='happy'] .orb-ball {
+  animation: orbHop 0.75s var(--spring);
+}
+.orb[data-mood='excited'] .orb-ball {
+  animation: orbHop 0.6s var(--spring) 2;
+}
+.orb[data-mood='excited'] .orb-eye {
+  scale: 1.2;
+}
+.orb[data-mood='wink'] .orb-ball {
+  rotate: 8deg;
+}
+@keyframes orbHop {
+  30% {
+    translate: 0 calc(var(--s) * -0.14);
+    scale: 0.96 1.05;
+  }
+  60% {
+    translate: 0 0;
+    scale: 1.06 0.94;
+  }
+}
+
+/* concerned: lids drop, the ball sinks and loses some colour */
+.orb[data-mood='concerned'] .orb-eye {
+  scale: 1 0.58;
+  translate: 0 2.5px;
+}
+.orb[data-mood='concerned'] .orb-ball {
+  translate: 0 calc(var(--s) * 0.04);
+  filter: saturate(0.82) brightness(0.97);
+}
+
+/* confused: uneven eyes, head tilt */
+.orb[data-mood='confused'] .orb-eye.l {
+  scale: 1 0.55;
+}
+.orb[data-mood='confused'] .orb-eye.r {
+  scale: 1.15;
+}
+.orb[data-mood='confused'] .orb-ball {
+  rotate: -10deg;
+}
+
+/* thinking: eyes dart up (JS), one squints, the glass churns */
+.orb[data-mood='thinking'] .orb-eye.r {
+  scale: 1 0.78;
+}
+.orb[data-mood='thinking'] .orb-swirl {
+  animation-duration: 1.6s;
+}
+.orb[data-mood='thinking'] .orb-ball {
+  animation: orbPulse 1.2s ease-in-out infinite;
+}
+@keyframes orbPulse {
+  50% {
+    scale: 1.06;
+    box-shadow:
+      0 0 0 calc(var(--s) * 0.12) rgba(var(--orb-glow), 0.16),
+      0 calc(var(--s) * 0.16) calc(var(--s) * 0.36) calc(var(--s) * -0.1) rgba(var(--orb-glow), 0.62);
+  }
+}
+
+/* talking: eyes bounce with the words */
+.orb[data-mood='talking'] .orb-eye {
+  animation: orbTalk 0.34s ease-in-out infinite alternate;
+}
+.orb[data-mood='talking'] .orb-swirl {
+  animation-duration: 3s;
+}
+@keyframes orbTalk {
+  to {
+    scale: 1.06 0.8;
+  }
+}
+
+/* listening: wide eyes on the input */
+.orb[data-mood='listening'] .orb-eye {
+  scale: 1.08;
+}
+
+/* asleep after a while with nobody around */
+.orb[data-sleep] {
+  animation-duration: 7s;
+}
+.orb[data-sleep] .orb-lid {
+  scale: var(--fx) 0.1;
+  transition-duration: 0.9s;
+}
+.orb[data-sleep] .orb-ball {
+  filter: saturate(0.75) brightness(0.92);
+}
+.orb[data-sleep] .orb-swirl {
+  animation-duration: 20s;
+}
+.orb-z {
+  right: -8%;
+  top: -18%;
+  font-size: calc(var(--s) * 0.3);
+  font-weight: 700;
+  line-height: 1;
+  color: rgb(var(--orb-glow));
+  opacity: 0;
+  pointer-events: none;
+}
+.orb[data-sleep] .orb-z {
+  animation: orbZ 2.6s ease-out infinite;
+}
+@keyframes orbZ {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+    scale: 0.6;
+  }
+  30% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    translate: calc(var(--s) * 0.18) calc(var(--s) * -0.3);
+    scale: 1.1;
+  }
+}
+
+/* woken up: eyes pop open */
+.orb.startle .orb-eye {
+  scale: 1.3;
+}
+.orb.startle .orb-ball {
+  animation: orbHop 0.6s var(--spring);
+}
+
+
+/* Botão flutuante e painel de conversa */
+.apura-fab { position: fixed; right: max(20px, env(safe-area-inset-right, 0px)); bottom: max(20px, env(safe-area-inset-bottom, 0px)); z-index: 40;
+  display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 20px 0 9px; border: 0; border-radius: 999px;
+  background: var(--fg); color: var(--bg); font-weight: 600; font-size: .92rem; box-shadow: 0 18px 40px -14px rgba(0,0,0,.6);
+  animation: apuraPousa .7s var(--ease) both .6s; }
+.apura-fab:hover { transform: translateY(-2px); }
+.apura-fab.aberto { opacity: 0; pointer-events: none; transform: scale(.9); }
+@keyframes apuraPousa { from { clip-path: circle(17px at 26px 50%); } to { clip-path: circle(140% at 26px 50%); } }
+.apura-painel { position: fixed; right: max(20px, env(safe-area-inset-right, 0px)); bottom: max(20px, env(safe-area-inset-bottom, 0px)); z-index: 41;
+  width: min(380px, calc(100vw - 32px)); height: min(560px, calc(100dvh - 120px)); display: flex; flex-direction: column;
+  background: var(--card); border: 1px solid var(--linha); border-radius: 22px; box-shadow: 0 30px 70px -20px rgba(0,0,0,.65); overflow: hidden;
+  transform-origin: bottom right; animation: apuraAbre .45s var(--spring) both; }
+.apura-painel[hidden] { display: none; }
+@keyframes apuraAbre { from { opacity: 0; transform: translateY(14px) scale(.94); } }
+.apura-cab { display: flex; align-items: center; gap: 10px; padding: 12px 12px 12px 16px; border-bottom: 1px solid var(--linha); }
+.apura-id { display: flex; flex-direction: column; margin-right: auto; min-width: 0; }
+.apura-id strong { font-size: .98rem; }
+.apura-id small { color: var(--mut); font-size: .72rem; }
+.apura-x { width: 32px; height: 32px; border-radius: 10px; border: 0; background: var(--soft); font-size: 1.1rem; color: var(--mut); }
+.apura-corpo { flex: 1; overflow: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; scrollbar-width: thin; }
+.apura-ola { text-align: center; padding: 10px 6px 4px; }
+.apura-ola .orb { margin: 0 auto 10px; display: block; }
+.apura-ola h3 { margin: 0 0 4px; font-family: var(--serif); font-size: 1.3rem; font-weight: 600; }
+.apura-ola h3 span { color: rgb(88,96,246); }
+.apura-ola p { margin: 0 auto 12px; color: var(--mut); font-size: .82rem; max-width: 30ch; }
+.apura-sug { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.apura-sug button { border: 1px solid var(--linha); background: var(--soft); border-radius: 999px; padding: 6px 11px; font-size: .78rem; color: var(--fg); }
+.apura-msg { max-width: 92%; padding: 9px 12px; border-radius: 16px; font-size: .84rem; animation: apuraMsg .35s var(--ease) both; }
+@keyframes apuraMsg { from { opacity: 0; transform: translateY(8px); } }
+.apura-msg.eu { align-self: flex-end; background: var(--fg); color: var(--bg); border-bottom-right-radius: 5px; }
+.apura-msg.apura { align-self: flex-start; background: var(--soft); border-bottom-left-radius: 5px; width: 92%; }
+.apura-msg .tit { margin: 0; color: var(--mut); font-size: .76rem; }
+.apura-msg .num { margin: 2px 0 6px; font-family: var(--serif); font-size: 1.6rem; font-weight: 600; line-height: 1; }
+.apura-msg .num small { font-family: var(--sans); font-size: .76rem; color: var(--mut); font-weight: 400; }
+.apura-msg ol { list-style: none; margin: 0; padding: 0; }
+.apura-msg li button { width: 100%; display: flex; justify-content: space-between; gap: 8px; text-align: left; background: none; border: 0; border-top: 1px solid var(--linha); padding: 6px 0; font-size: .8rem; }
+.apura-msg li small { color: var(--mut); white-space: nowrap; }
+.apura-limpar { margin-top: 6px; background: none; border: 0; padding: 2px 0; color: var(--mut); text-decoration: underline; font-size: .76rem; }
+.apura-msg.pensando { display: flex; gap: 4px; width: auto; }
+.apura-msg.pensando i { width: 6px; height: 6px; border-radius: 50%; background: var(--mut); animation: apuraPonto 1s ease-in-out infinite; }
+.apura-msg.pensando i:nth-child(2) { animation-delay: .15s; } .apura-msg.pensando i:nth-child(3) { animation-delay: .3s; }
+@keyframes apuraPonto { 50% { opacity: .3; transform: translateY(-3px); } }
+.apura-entrada { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--linha); }
+.apura-entrada input { flex: 1; min-width: 0; background: var(--soft); border: 1px solid var(--linha); border-radius: 999px; padding: 9px 14px; }
+.apura-entrada button { width: 38px; height: 38px; border-radius: 50%; border: 0; background: rgb(88,96,246); color: #fff; font-size: 1.05rem; font-weight: 700; }
+@media (max-width: 1023px) {
+  .apura-fab { display: none; }
+  .apura-painel { right: 8px; left: 8px; width: auto; bottom: calc(60px + env(safe-area-inset-bottom, 0px)); height: calc(100dvh - 140px); }
+}
+@media (prefers-reduced-motion: reduce) { .orb, .orb * { animation: none !important; } }

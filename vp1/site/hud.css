@@ -175,3 +175,5 @@ button:active:not(:disabled) { transform: scale(.96); }
 @keyframes brasa-halo { 0%, 100% { opacity: .7; transform: scaleY(.94); } 50% { opacity: 1; transform: scaleY(1.06); } }
 @keyframes brasa-faisca { 0% { opacity: 0; transform: translate(0, 0) scale(1); } 12% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx, 3px), -30px) scale(.4); } }
 .barra .meio { z-index: 3; }
+.grade { grid-template-columns: 280px minmax(0, 1fr) 300px; }
+.busca { margin-top: 0; }

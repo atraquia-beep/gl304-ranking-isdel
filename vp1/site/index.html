@@ -8,8 +8,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Faustina:wght@500;600;700&family=Geist:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="app.css?v=4">
-<link rel="stylesheet" href="hud.css?v=4">
+<link rel="stylesheet" href="app.css?v=5">
+<link rel="stylesheet" href="hud.css?v=5">
+<link rel="stylesheet" href="apura.css?v=5">
 <script>try { var t = localStorage.getItem('tema'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
 <body data-aba="mapa">
@@ -88,12 +89,6 @@
       <ol class="porreg" id="porreg"></ol>
     </section>
     <section class="painel">
-      <h2>Pergunte ao mapa</h2>
-      <form id="pergunta" role="search">
-        <div class="linha"><input id="q" autocomplete="off" aria-label="Pergunta" placeholder="Ex.: quais viraram em MG"><button type="submit">Perguntar</button></div>
-      </form>
-      <div class="sugestoes" id="sugestoes"></div>
-      <div class="resposta" id="resposta" aria-live="polite" hidden></div>
       <label class="busca">Buscar município <input list="municipios" id="busca" autocomplete="off" placeholder="Ex.: Campinas"></label>
       <datalist id="municipios"></datalist>
     </section>
@@ -111,7 +106,7 @@
 <nav class="abas" aria-label="Seções">
   <button type="button" data-aba="mapa" aria-pressed="true">Mapa</button>
   <button type="button" data-aba="ranking" aria-pressed="false">Ranking</button>
-  <button type="button" data-aba="perguntar" aria-pressed="false">Perguntar</button>
+  <button type="button" data-aba="perguntar" aria-pressed="false">Apura</button>
   <button type="button" data-aba="metodo" aria-pressed="false">Método</button>
 </nav>
 
@@ -131,6 +126,6 @@
   <form method="dialog"><button type="submit">Fechar</button></form>
 </dialog>
 
-<script type="module" src="app.js?v=4"></script>
+<script type="module" src="app.js?v=5"></script>
 </body>
 </html>
