@@ -9,7 +9,11 @@ const dec = (x, d = 1) => x.toLocaleString('pt-BR', { minimumFractionDigits: d, 
 const pp = m => dec(Math.abs(100 * m)) + ' p.p.';
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const lado = m => m > 0 ? '13' : m < 0 ? '22' : '=';
-const CAND = [{ 13: 'Lula', 22: 'Bolsonaro' }, { 13: 'Lula', 22: 'Flávio' }];  // [2022, 2026]
+// Duas comparações sobre os mesmos dados: estado inicial (a, margem ma) → 2º turno de 2026
+const CMP = {
+  turnos: { a: 't1', ma: 'margem1', virou: 'virou1', rot: ['1º turno', '2º turno'], cand: [{ 13: 'Lula', 22: 'Flávio' }, { 13: 'Lula', 22: 'Flávio' }], desde: 'do 1º para o 2º turno', frase: 'viraram no 2º turno' },
+  anos: { a: 't22', ma: 'margem22', virou: 'virou', rot: ['2022', '2026'], cand: [{ 13: 'Lula', 22: 'Bolsonaro' }, { 13: 'Lula', 22: 'Flávio' }], desde: 'desde 2022', frase: 'viraram de lado desde 2022' },
+};
 const UF = { 11: 'RO', 12: 'AC', 13: 'AM', 14: 'RR', 15: 'PA', 16: 'AP', 17: 'TO', 21: 'MA', 22: 'PI', 23: 'CE', 24: 'RN', 25: 'PB', 26: 'PE', 27: 'AL', 28: 'SE', 29: 'BA', 31: 'MG', 32: 'ES', 33: 'RJ', 35: 'SP', 41: 'PR', 42: 'SC', 43: 'RS', 50: 'MS', 51: 'MT', 52: 'GO', 53: 'DF' };
 const UFNOME = { RO: 'Rondônia', AC: 'Acre', AM: 'Amazonas', RR: 'Roraima', PA: 'Pará', AP: 'Amapá', TO: 'Tocantins', MA: 'Maranhão', PI: 'Piauí', CE: 'Ceará', RN: 'Rio Grande do Norte', PB: 'Paraíba', PE: 'Pernambuco', AL: 'Alagoas', SE: 'Sergipe', BA: 'Bahia', MG: 'Minas Gerais', ES: 'Espírito Santo', RJ: 'Rio de Janeiro', SP: 'São Paulo', PR: 'Paraná', SC: 'Santa Catarina', RS: 'Rio Grande do Sul', MS: 'Mato Grosso do Sul', MT: 'Mato Grosso', GO: 'Goiás', DF: 'Distrito Federal' };
 const REGIAO = { 1: 'N', 2: 'NE', 3: 'SE', 4: 'S', 5: 'CO' };
@@ -36,7 +40,8 @@ const caminho = (g, P) => { const p = new Path2D(); g.rings.forEach(r => r.forEa
 
 function totais(d, idx) {
   const s = { 0: { 13: 0, 22: 0 }, 1: { 13: 0, 22: 0 } };
-  idx.forEach(i => { s[0][13] += d.t22['13'][i]; s[0][22] += d.t22['22'][i]; s[1][13] += d.t26['13'][i]; s[1][22] += d.t26['22'][i]; });
+  const a = d[C().a];
+  idx.forEach(i => { s[0][13] += a['13'][i]; s[0][22] += a['22'][i]; s[1][13] += d.t26['13'][i]; s[1][22] += d.t26['22'][i]; });
   return s;
 }
 const margemT = (s, a) => (s[a][13] - s[a][22]) / (s[a][13] + s[a][22]);
@@ -49,23 +54,33 @@ function montar(d, topo, soUf) {
   const uf = d.ibge.map(c => UF[String(c).slice(0, 2)]);
   const ufs = ufGeo.map(g => {
     const sig = UF[g.props.uf], idx = d.ibge.map((_, i) => i).filter(i => uf[i] === sig);
-    return { sig, path: caminho(g, P), lp: P.p([g.props.lx, g.props.ly]), idx, s: totais(d, idx), viraram: idx.filter(i => d.virou[i]).length };
+    return { sig, path: caminho(g, P), lp: P.p([g.props.lx, g.props.ly]), idx };
   });
   const r = RK?.[soUf ? 'sp' : 'br'];
   const ordem = k => r ? d.ibge.map((_, i) => i).sort((a, b) => r['pos_' + k][a] - r['pos_' + k][b]) : [];  // ordem e empates do notebook
   return {
-    d, mun, ufs, P, uf, nomes: d.nome.map((n, i) => `${n} (${uf[i]})`), s: totais(d, d.ibge.map((_, i) => i)),
+    d, mun, ufs, P, uf, nomes: d.nome.map((n, i) => `${n} (${uf[i]})`),
     rank: r && { soma: ordem('soma'), phi: ordem('phi'), pos: { soma: r.pos_soma, phi: r.pos_phi }, nota: { soma: r.soma, phi: r.phi } },
   };
 }
+// Estado da tela
+const S = { esc: 'br', cmp: 'turnos', t: 1, met: 'phi', sel: null, ufSel: null, realce: null, view: { k: 1, x: 0, y: 0 } };
+const C = () => CMP[S.cmp];
 const ESC = { br: montar(BR, brTopo, null), sp: montar(SP, spTopo, 35) };
+// Totais que dependem da comparação escolhida
+function recontar() {
+  Object.values(ESC).forEach(e => {
+    const { d } = e, vir = d[C().virou];
+    e.s = totais(d, d.ibge.map((_, i) => i));
+    e.ufs.forEach(u => { u.s = totais(d, u.idx); u.viraram = u.idx.filter(i => vir[i]).length; });
+  });
+}
+recontar();
 const spIdx = new Map(SP.ibge.map((c, i) => [c, i])), brIdx = new Map(BR.ibge.map((c, i) => [c, i]));
 
-// Estado da tela
-const S = { esc: 'br', t: 1, met: 'phi', sel: null, ufSel: null, realce: null, view: { k: 1, x: 0, y: 0 } };
 const E = () => ESC[S.esc];
 const modoUF = () => celular.matches && S.esc === 'br';
-const mInterp = (d, i) => d.margem22[i] + (d.margem26[i] - d.margem22[i]) * S.t;
+const mInterp = (d, i) => { const m0 = d[C().ma][i]; return m0 + (d.margem26[i] - m0) * S.t; };
 const sInterp = s => ({ 13: s[0][13] + (s[1][13] - s[0][13]) * S.t, 22: s[0][22] + (s[1][22] - s[0][22]) * S.t });
 
 // Cores: tokens do tema + 4 faixas por lado
@@ -186,16 +201,21 @@ cv.addEventListener('keydown', e => {
 // Placar, legenda, linha do tempo
 const mi = x => x >= 1e6 ? dec(x / 1e6) + ' mi' : nf.format(Math.round(x));
 function placar() {
-  const { s, d } = E(), st = sInterp(s), tot = st[13] + st[22], a = S.t < 0.5 ? 0 : 1, c = CAND[a];
+  const { s, d } = E(), st = sInterp(s), tot = st[13] + st[22], a = S.t < 0.5 ? 0 : 1, c = C().cand[a], rot = C().rot;
   $('#nm13').textContent = c[13]; $('#nm22').textContent = c[22];
   $('#b13').style.width = (100 * st[13] / tot) + '%'; $('#brasa').style.left = (100 * st[13] / tot) + '%'; $('#b22').style.width = (100 * st[22] / tot) + '%';
   const so = { instantaneo: S.t > 0 && S.t < 1 };  // arrastando a linha do tempo: sem contagem
   contar($('#v13'), `${dec(100 * st[13] / tot, 2)}%`, so); contar($('#vv13'), `${nf.format(st[13])} votos`, so);
   contar($('#v22'), `${dec(100 * st[22] / tot, 2)}%`, so); contar($('#vv22'), `${nf.format(st[22])} votos`, so);
-  contar($('#frase'), `${nf.format(d.virou.reduce((x, v) => x + v, 0))} municípios viraram de lado`, so);
+  contar($('#frase'), `${nf.format(d[C().virou].reduce((x, v) => x + v, 0))} municípios ${C().frase}`, so);
+  // 1º turno: a barra é só 13 × 22; avisa quanto os outros candidatos tiveram
+  const v1 = S.cmp === 'turnos' && a === 0 && d.t1.validos.reduce((x, v) => x + v, 0);
+  $('#outros').textContent = v1 ? `Outros candidatos: ${dec(100 * (1 - (s[0][13] + s[0][22]) / v1))}% dos válidos, fora da barra` : '';
+  document.querySelectorAll('[data-ano]').forEach(b => b.textContent = rot[+b.dataset.ano]);
+  document.querySelectorAll('.tempo > span').forEach((e, k) => e.textContent = rot[k]);
   document.querySelectorAll('[data-ano]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.ano === a && (S.t === 0 || S.t === 1))));
   $('#t').value = Math.round(S.t * 1000);
-  $('#t-rot').textContent = S.t === 0 ? '2022' : S.t === 1 ? '2026' : `transição · ${Math.round(S.t * 100)}%`;
+  $('#t-rot').textContent = S.t === 0 ? rot[0] : S.t === 1 ? rot[1] : `transição · ${Math.round(S.t * 100)}%`;
   // Legenda: contagem por lado no ano exibido + 4 faixas
   const m = d.ibge.map((_, i) => mInterp(d, i)), n13 = m.filter(x => x > 0).length, n22 = m.filter(x => x < 0).length;
   const sw = cs => cs.map(x => `<i style="background:${x}"></i>`).join('');
@@ -221,8 +241,14 @@ function ranking() {
   const R = E().rank, nomes = S.esc === 'br' ? E().nomes : E().d.nome;
   document.querySelectorAll('[data-met]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.met === S.met)));
   if (!R) { $('#rank').innerHTML = ''; $('#rank-nota').textContent = 'Ranking indisponível: vp1/notebook/ranking.json não carregou.'; return; }
-  const ord = R[S.met].slice(0, 10), nota = R.nota[S.met], lo = Math.min(...nota), hi = nota[ord[0]];
-  $('#rank').innerHTML = ord.map(i => `<li><button type="button" data-i="${i}"${i === S.sel ? ' aria-current="true"' : ''}><span class="p">${R.pos[S.met][i]}</span><span>${esc(nomes[i])}</span><span class="v">${S.met === 'phi' ? 'φ ' : ''}${dec(nota[i], 3)}</span><span class="b"><i style="width:${100 * (nota[i] - lo) / (hi - lo || 1)}%"></i></span></button></li>`).join('');
+  const ord = R[S.met].slice(0, 10), nota = R.nota[S.met], { d } = E();
+  // Por que está no topo: os critérios do notebook com maior peso, em linguagem de campanha
+  const mil = x => x >= 1e6 ? dec(x / 1e6) + ' mi' : nf.format(Math.round(x / 1e3)) + ' mil';
+  const porque = i => [`margem ${dec(Math.abs(100 * d.margem26[i]))}`, `${mil(d.t26.eleitorado[i])} eleitores`, d.virou[i] ? 'virou' : ''].filter(Boolean).join(' · ');
+  $('#rank').innerHTML = ord.map(i => `<li><button type="button" data-i="${i}"${i === S.sel ? ' aria-current="true"' : ''}><span class="p">${R.pos[S.met][i]}</span><span>${esc(nomes[i])}</span><span class="v">${dec(nota[i], 2)}</span><small class="pq">${porque(i)}</small></button></li>`).join('');
+  $('#rank-explica').textContent = S.met === 'phi'
+    ? 'Nota de −1 a 1 (φ do PROMETHEE II): quanto maior, mais o município supera os outros nos critérios.'
+    : 'Nota de 0 a 1: média dos critérios normalizados, com os pesos do notebook.';
   const chave = S.esc + S.met;
   if (chave !== ranking.k) { ranking.k = chave; $('#rank').classList.remove('entra'); void $('#rank').offsetWidth; $('#rank').classList.add('entra'); contarTudo($('#rank'), '.v', 45); }
   const outro = S.met === 'soma' ? 'phi' : 'soma', comuns = ord.filter(i => R.pos[outro][i] <= 10).length;
@@ -236,6 +262,8 @@ const dTxt = x => `<span class="${x > 0 ? 't13' : 't22'}">${x > 0 ? '13' : '22'}
 function mudou() {
   queueMicrotask(() => { contarTudo($('#regioes'), 'li > span', 60); contarTudo($('#ufbars'), '.n', 15); });
   const { d, ufs, s, nomes } = E();
+  $('#h-mudou').textContent = `O que mudou ${C().desde}`;
+  $('#mudou-nota').textContent = `Variação da margem (13 − 22) em pontos, ${C().desde}, na cor de quem cresceu.`;
   if (S.esc === 'br') {
     const reg = Object.entries(REGIAO).map(([c, nome]) => [nome, totais(d, d.ibge.map((_, i) => i).filter(i => String(d.ibge[i])[0] === c))]);
     $('#regioes').innerHTML = [['Brasil', s], ...reg].map(([n, st]) => `<li><b>${n}</b>${dTxt(delta(st))}</li>`).join('');
@@ -244,7 +272,7 @@ function mudou() {
     $('#ufbars').innerHTML = linhas.map(([sig, x]) => `<li><span>${sig}</span><span class="trilho"><i style="${x > 0 ? 'left:50%' : 'right:50%'};width:${50 * Math.abs(x) / mx}%;background:var(${x > 0 ? '--c13' : '--c22'})"></i></span><span class="n">${x > 0 ? '+' : '−'}${dec(Math.abs(100 * x))}</span></li>`).join('');
   } else {
     $('#regioes').innerHTML = `<li><b>São Paulo</b>${dTxt(delta(s))}</li>`;
-    const linhas = d.ibge.map((_, i) => [i, d.margem26[i] - d.margem22[i]]).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 12);
+    const linhas = d.ibge.map((_, i) => [i, d.margem26[i] - d[C().ma][i]]).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 12);
     const mx = Math.abs(linhas[0][1]);
     $('#ufbars').innerHTML = linhas.map(([i, x]) => `<li style="grid-template-columns:7.5em 1fr 3.6em"><span title="${esc(d.nome[i])}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(d.nome[i])}</span><span class="trilho"><i style="${x > 0 ? 'left:50%' : 'right:50%'};width:${50 * Math.abs(x) / mx}%;background:var(${x > 0 ? '--c13' : '--c22'})"></i></span><span class="n">${x > 0 ? '+' : '−'}${dec(Math.abs(100 * x))}</span></li>`).join('');
   }
@@ -266,7 +294,7 @@ function porRegiao() {
 
 // Seleção: card do município ou do estado, e pílula
 function linhaAno(v13, v22, a) { const m = (v13 - v22) / (v13 + v22); return `<tr><td>${a}</td><td class="t13">${nf.format(v13)}</td><td class="t22">${nf.format(v22)}</td><td>${m ? `${lado(m)} +${pp(m)}` : 'empate'}</td></tr>`; }
-const tabela = rows => `<table><thead><tr><th>Ano</th><th>Votos 13</th><th>Votos 22</th><th>Margem</th></tr></thead><tbody>${rows}</tbody></table>`;
+const tabela = rows => `<table><thead><tr><th></th><th>Votos 13</th><th>Votos 22</th><th>Margem</th></tr></thead><tbody>${rows}</tbody></table>`;
 function mostrarCard(html) {
   const c = $('#card'); c.hidden = false;
   c.innerHTML = `<button type="button" class="fechar" aria-label="Fechar">×</button>` + html;
@@ -283,14 +311,15 @@ function posicoes(ibge) {
 function selecionar(i) {
   const { d, nomes } = E();
   S.sel = i; S.ufSel = null;
-  mostrarCard(`<h3>${esc(nomes[i])}</h3>` + tabela(linhaAno(d.t22['13'][i], d.t22['22'][i], 2022) + linhaAno(d.t26['13'][i], d.t26['22'][i], 2026)) +
-    `<span class="selo ${d.virou[i] ? 'sim' : ''}">${d.virou[i] ? 'Virou' : 'Não virou'}</span>` + posicoes(d.ibge[i]));
+  const { a, virou, rot } = C(), v = d[virou][i];
+  mostrarCard(`<h3>${esc(nomes[i])}</h3>` + tabela(linhaAno(d[a]['13'][i], d[a]['22'][i], rot[0]) + linhaAno(d.t26['13'][i], d.t26['22'][i], rot[1])) +
+    `<span class="selo ${v ? 'sim' : ''}">${v ? 'Virou' : 'Não virou'}</span>` + posicoes(d.ibge[i]));
   pilula(); ranking(); redesenhar();
 }
 function selecionarUF(sig) {
   const u = E().ufs.find(x => x.sig === sig);
   S.ufSel = sig; S.sel = null;
-  mostrarCard(`<h3>${UFNOME[sig]}</h3>` + tabela(linhaAno(u.s[0][13], u.s[0][22], 2022) + linhaAno(u.s[1][13], u.s[1][22], 2026)) +
+  mostrarCard(`<h3>${UFNOME[sig]}</h3>` + tabela(linhaAno(u.s[0][13], u.s[0][22], C().rot[0]) + linhaAno(u.s[1][13], u.s[1][22], C().rot[1])) +
     `<p class="nota">${nf.format(u.viraram)} de ${nf.format(u.idx.length)} municípios viraram de lado.</p>`);
   pilula(); redesenhar();
 }
@@ -300,12 +329,12 @@ function pilula() {
   const i = S.sel ?? rank?.phi[0];
   if (i === undefined) { p.textContent = ''; return; }
   p.dataset.i = i;
-  p.textContent = `${S.sel === null ? '1º do ranking · ' : ''}${S.esc === 'br' ? nomes[i] : d.nome[i]} ${d.virou[i] ? 'virou' : 'não virou'} · margem ${pp(d.margem26[i])} em 2026`;
+  p.textContent = `${S.sel === null ? '1º do ranking · ' : ''}${S.esc === 'br' ? nomes[i] : d.nome[i]} ${d[C().virou][i] ? 'virou' : 'não virou'} · margem ${pp(d.margem26[i])} no 2º turno de 2026`;
 }
 $('#pilula').onclick = e => { const i = e.currentTarget.dataset.i; if (i !== '') selecionar(+i); };
 
 // Apura: o assistente responde e acende os municípios no mapa
-const blocoPerg = k => ({ d: ESC[k].d, uf: ESC[k].uf });
+const blocoPerg = k => ({ d: { ...ESC[k].d, virou: ESC[k].d[C().virou] }, uf: ESC[k].uf });
 function responder(q) {
   const rank = { br: ESC.br.rank && { prom: ESC.br.rank.phi, soma: ESC.br.rank.soma }, sp: ESC.sp.rank && { prom: ESC.sp.rank.phi, soma: ESC.sp.rank.soma } };
   const r = perguntar(q, { br: blocoPerg('br'), sp: blocoPerg('sp'), rank });
@@ -314,7 +343,7 @@ function responder(q) {
   S.realce = new Set(r.idx); redesenhar();
   const { d, nomes } = E(), mais = r.idx.length - 8;
   return `<p class="tit">${esc(r.titulo)}</p><p class="num"><span class="n">${nf.format(r.total)}</span> <small>município${r.total === 1 ? '' : 's'} acesos no mapa</small></p>` +
-    `<ol>${r.idx.slice(0, 8).map(i => `<li><button type="button" data-i="${i}"><span>${esc(nomes[i])}</span><small>${lado(d.margem22[i])}→${lado(d.margem26[i])} · ${pp(d.margem26[i])}</small></button></li>`).join('')}</ol>` +
+    `<ol>${r.idx.slice(0, 8).map(i => `<li><button type="button" data-i="${i}"><span>${esc(nomes[i])}</span><small>${lado(d[C().ma][i])}→${lado(d.margem26[i])} · ${pp(d.margem26[i])}</small></button></li>`).join('')}</ol>` +
     (mais > 0 ? `<p class="nota">e mais ${nf.format(mais)}.</p>` : '');
 }
 const apura = montarApura({
@@ -338,6 +367,11 @@ function trocarEscopo(k) {
   placar(); ranking(); mudou(); porRegiao(); pilula(); redesenhar();
 }
 document.querySelectorAll('[data-esc]').forEach(b => b.onclick = () => trocarEscopo(b.dataset.esc));
+document.querySelectorAll('[data-cmp]').forEach(b => b.onclick = () => {
+  S.cmp = b.dataset.cmp;
+  document.querySelectorAll('[data-cmp]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  recontar(); trocarEscopo(S.esc);
+});
 
 function aba(nome) {
   if (nome === 'metodo') { $('#metodo').showModal(); return; }

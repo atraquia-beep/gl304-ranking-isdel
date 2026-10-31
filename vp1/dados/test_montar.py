@@ -48,6 +48,15 @@ def test_virou_coerente():
             assert v == int(a * b < 0)
 
 
+
+def test_virou_1o_turno_coerente():
+    # 1º turno: 13 + 22 nunca passa dos válidos (há outros candidatos) e "virou1" = sinal da margem mudou
+    for d in (sp, br):
+        assert all(a + b <= v for a, b, v in zip(d["t1"]["13"], d["t1"]["22"], d["t1"]["validos"]))
+        for v, a, b in zip(d["virou1"], d["margem1"], d["margem26"]):
+            assert v == int(a * b < 0)
+    assert sum(br["virou1"]) == 212
+
 if __name__ == "__main__":
     for nome, f in list(globals().items()):
         if nome.startswith("test_"):

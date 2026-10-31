@@ -67,8 +67,8 @@ h2 { font-family: var(--serif); font-weight: 600; font-size: 1.15rem; margin: 0 
 .rank button:hover, .rank button[aria-current="true"] { background: var(--neutro); }
 .rank .p { color: var(--mut); font-variant-numeric: tabular-nums; }
 .rank .v { color: var(--mut); font-size: .78rem; font-variant-numeric: tabular-nums; }
-.rank .b { grid-column: 2 / -1; height: 4px; border-radius: 2px; background: var(--neutro); overflow: hidden; }
-.rank .b i { display: block; height: 100%; background: var(--fg); opacity: .7; }
+.rank .pq { grid-column: 2 / -1; color: var(--mut); font-size: .72rem; }
+.outros { margin: 0; color: var(--mut); font-size: .76rem; flex: 1; text-align: center; }
 
 /* O que mudou */
 .regioes { list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0; padding: 0; }
@@ -138,7 +138,9 @@ dialog form button { margin-top: 12px; border: 0; border-radius: 10px; padding: 
 /* Celular e tablet: uma coluna por aba, barra de abas fixa embaixo */
 @media (max-width: 1023px) {
   body { grid-template-rows: auto auto minmax(0, 1fr) auto; }
-  .nav { padding: 6px 12px; }
+  .nav { padding: 6px 12px; flex-wrap: wrap; row-gap: 6px; }
+  .nav .cmp { order: 5; width: 100%; } .nav .cmp button { flex: 1; }
+  .tempo > span { display: none; } .tempo output { white-space: nowrap; font-size: .78rem; }
   .placar { padding: 8px 12px 0; gap: 2px 8px; }
   .lado .nm { font-size: .9rem; } .lado .num { font-size: 1.2rem; }
   .placar { grid-template-columns: 1fr auto 1fr; }

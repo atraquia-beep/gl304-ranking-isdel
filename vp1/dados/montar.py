@@ -49,22 +49,22 @@ def ibge():
     return pd.DataFrame({"ibge": s.D1C.astype(int), "nome": s.D1N.str[:-5], "uf": s.D1N.str[-2:]})
 
 
-def turno2(ano):
-    """Presidente, 2º turno, por código TSE de município (exterior 'ZZ' fora)."""
+def turno2(ano, turno=2):
+    """Presidente, por código TSE de município (exterior 'ZZ' fora). No 1º turno só 13 e 22 entram nas colunas de votos."""
     v = pd.read_csv(CACHE / f"votacao_candidato_munzona_{ano}_BR.csv", sep=";", encoding="latin1",
                     usecols=["NR_TURNO", "CD_CARGO", "SG_UF", "CD_MUNICIPIO", "NM_MUNICIPIO",
                              "NR_CANDIDATO", "QT_VOTOS_NOMINAIS_VALIDOS"])
-    v = v[(v.NR_TURNO == 2) & (v.CD_CARGO == 1) & (v.SG_UF != "ZZ")]
+    v = v[(v.NR_TURNO == turno) & (v.CD_CARGO == 1) & (v.SG_UF != "ZZ")]
     p = v.pivot_table(index="CD_MUNICIPIO", columns="NR_CANDIDATO", values="QT_VOTOS_NOMINAIS_VALIDOS", aggfunc="sum")
-    assert list(p.columns) == [13, 22], p.columns
+    assert turno == 1 or list(p.columns) == [13, 22], p.columns
     d = pd.read_csv(CACHE / f"detalhe_votacao_munzona_{ano}_BR.csv", sep=";", encoding="latin1",
                     usecols=["NR_TURNO", "CD_CARGO", "SG_UF", "CD_MUNICIPIO", "QT_APTOS",
                              "QT_COMPARECIMENTO", "QT_TOTAL_VOTOS_VALIDOS"])
-    d = d[(d.NR_TURNO == 2) & (d.CD_CARGO == 1) & (d.SG_UF != "ZZ")].groupby("CD_MUNICIPIO").sum(numeric_only=True)
+    d = d[(d.NR_TURNO == turno) & (d.CD_CARGO == 1) & (d.SG_UF != "ZZ")].groupby("CD_MUNICIPIO").sum(numeric_only=True)
     out = pd.DataFrame({"13": p[13], "22": p[22], "validos": d.QT_TOTAL_VOTOS_VALIDOS,
                         "comparecimento": d.QT_COMPARECIMENTO, "eleitorado": d.QT_APTOS}).fillna(0).astype(int)
     # duas tabelas independentes do TSE precisam bater
-    assert (out["13"] + out["22"] == out.validos).all()
+    assert (out["13"] + out["22"] == out.validos).all() if turno == 2 else (out["13"] + out["22"] <= out.validos).all()
     tse = v.groupby("CD_MUNICIPIO").agg(uf=("SG_UF", "first"), nome_tse=("NM_MUNICIPIO", "first"))
     return out.join(tse)
 
@@ -86,6 +86,7 @@ def montar():
     t22, t26 = turno2(2022), turno2(2026)
     cod, ib = depara(t26)
     base = t22.join(t26, lsuffix="_22", rsuffix="_26", how="inner")  # só municípios com as duas eleições
+    base = base.join(turno2(2026, 1).drop(columns=["uf", "nome_tse"]).add_suffix("_1"), how="left")
     base["ibge"] = cod
     sem_par = sorted(set(t22.index) ^ set(t26.index)) + base.index[base.ibge.isna()].tolist()
     base = base.dropna(subset=["ibge"])
@@ -97,6 +98,9 @@ def montar():
     # virou = os dois anos têm vencedor e ele mudou; empate conta como "sem vencedor"
     base["virou"] = ((m22 != 0) & (m26 != 0) & ((m22 > 0) != (m26 > 0))).astype(int)
     base["margem22"], base["margem26"] = m22.round(5), m26.round(5)
+    # 1º turno de 2026: margem só entre 13 e 22 (os outros candidatos ficam fora da conta) e virada para o 2º turno
+    m1 = (base["13_1"] - base["22_1"]) / (base["13_1"] + base["22_1"])
+    base["margem1"], base["virou1"] = m1.round(5), ((m1 != 0) & (m26 != 0) & ((m1 > 0) != (m26 > 0))).astype(int)
     return base, sem_par
 
 
@@ -106,7 +110,8 @@ def colunar(df, isdel=None):
     out = {"versao": 1, "gerado": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
            "fontes": FONTES, "n": len(df), "ibge": df.ibge.tolist(), "nome": df.nome.tolist(),
            "t22": t("22"), "t26": t("26"), "virou": df.virou.tolist(),
-           "margem22": df.margem22.tolist(), "margem26": df.margem26.tolist()}
+           "margem22": df.margem22.tolist(), "margem26": df.margem26.tolist(),
+           "t1": t("1"), "margem1": df.margem1.tolist(), "virou1": df.virou1.tolist()}
     if isdel is not None:
         out["isdel"] = {k: isdel[c].round(5).tolist() for k, c in ISDEL_COLS.items()}
     return out
@@ -126,15 +131,17 @@ def salvar(obj, nome):
 
 
 if __name__ == "__main__":
+    import sys
     br, sem_par = montar()
     sp = br[br.ibge // 100000 == 35].reset_index(drop=True)
     salvar(colunar(br), "br.json")
     salvar(colunar(sp, isdel_sp(sp)), "sp.json")
     # malhas IBGE -> TopoJSON simplificado (precisa de node/npx); 4300001/4300002 são as lagoas dos Patos e Mirim
-    for uf, pct, saida in [("SP", "4%", "sp-municipios.topo.json"), ("BR", "0.6%", "br-municipios.topo.json")]:
+    for uf, pct, saida in [] if "--sem-malha" in sys.argv else [("SP", "4%", "sp-municipios.topo.json"), ("BR", "0.6%", "br-municipios.topo.json")]:
         subprocess.run(["npx", "-y", "mapshaper@0.6.102", str(CACHE / f"{uf}_Municipios_2022/{uf}_Municipios_2022.shp"),
                         "encoding=utf8", "-each", "ibge=+CD_MUN", "-filter", "ibge!=4300001 && ibge!=4300002",
                         "-filter-fields", "ibge", "-rename-layers", "municipios", "-simplify", pct, "keep-shapes",
                         "-sort", "ibge", "-o", "format=topojson", "quantization=1e5", str(AQUI / saida)], check=True)
     print("sem par TSE<->IBGE (fora):", sem_par)
     print(f"BR n={len(br)} viraram={br.virou.sum()} | SP n={len(sp)} viraram={sp.virou.sum()}")
+    print(f"1º→2º turno 2026: BR viraram={br.virou1.sum()} | SP viraram={sp.virou1.sum()}")

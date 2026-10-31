@@ -64,8 +64,6 @@ button:active:not(:disabled) { transform: scale(.96); }
 .rank button { grid-template-columns: 1.8em 1fr auto; padding: 6px 6px; border-radius: var(--r-sm); }
 .rank .p { font-weight: 600; font-size: .78rem; }
 .rank .v { font-weight: 600; color: var(--fg); font-size: .8rem; }
-.rank .b { height: 5px; background: var(--soft); }
-.rank .b i { background: linear-gradient(90deg, var(--c13), var(--c22)); opacity: 1; }
 .rank button:hover, .rank button[aria-current="true"] { background: var(--soft); }
 
 /* O que mudou: linha de números por região, depois barras por UF */

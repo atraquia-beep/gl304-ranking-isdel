@@ -4,18 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Onde 2030 se decide</title>
-<meta name="description" content="Municípios que trocaram o vencedor do 2º turno presidencial entre 2022 e 2026, e onde a eleição de 2030 tende a ser decidida.">
+<meta name="description" content="Municípios que viraram do 1º para o 2º turno presidencial de 2026 (ou desde 2022), e onde a eleição de 2030 tende a ser decidida.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Faustina:wght@500;600;700&family=Geist:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="app.css?v=5">
-<link rel="stylesheet" href="hud.css?v=5">
-<link rel="stylesheet" href="apura.css?v=5">
+<link rel="stylesheet" href="app.css?v=6">
+<link rel="stylesheet" href="hud.css?v=6">
+<link rel="stylesheet" href="apura.css?v=6">
 <script>try { var t = localStorage.getItem('tema'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
 <body data-aba="mapa">
 <header class="nav">
   <span class="logo">GL304 · 2030</span>
+  <div class="tabs cmp" role="group" aria-label="Comparação">
+    <button type="button" data-cmp="turnos" aria-pressed="true">1º → 2º turno</button>
+    <button type="button" data-cmp="anos" aria-pressed="false">2022 → 2026</button>
+  </div>
   <div class="tabs" role="group" aria-label="Escopo">
     <button type="button" data-esc="br" aria-pressed="true">Brasil</button>
     <button type="button" data-esc="sp" aria-pressed="false">São Paulo</button>
@@ -37,9 +41,10 @@
   </div>
   <div class="sub">
     <div class="anos" role="group" aria-label="Ano">
-      <button type="button" data-ano="0" aria-pressed="false">2022</button>
-      <button type="button" data-ano="1" aria-pressed="true">2026</button>
+      <button type="button" data-ano="0" aria-pressed="false">1º turno</button>
+      <button type="button" data-ano="1" aria-pressed="true">2º turno</button>
     </div>
+    <p class="outros" id="outros" aria-live="polite"></p>
     <p class="apurado"><b>100%</b> apurado</p>
   </div>
 </section>
@@ -48,16 +53,18 @@
   <aside class="col esq" aria-label="Ranking e mudanças">
     <section class="painel">
       <h2>Onde 2030 se decide</h2>
+      <p class="nota">Onde vale concentrar a campanha de 2030. Pesam mais: margem apertada no 2º turno de 2026 (em pontos), muitos eleitores, abstenção alta e ter virado desde 2022.</p>
       <div class="seg" role="group" aria-label="Metodologia">
         <button type="button" data-met="soma" aria-pressed="false">Soma ponderada</button>
         <button type="button" data-met="phi" aria-pressed="true">PROMETHEE II</button>
       </div>
+      <p class="nota" id="rank-explica"></p>
       <ol class="rank" id="rank"></ol>
       <p class="nota" id="rank-nota"></p>
     </section>
     <section class="painel">
-      <h2>O que mudou desde 2022</h2>
-      <p class="nota">Variação da margem (13 − 22) em pontos, de 2022 para 2026, na cor de quem cresceu.</p>
+      <h2 id="h-mudou">O que mudou</h2>
+      <p class="nota" id="mudou-nota"></p>
       <ul class="regioes" id="regioes"></ul>
       <ol class="ufbars" id="ufbars"></ol>
     </section>
@@ -75,10 +82,10 @@
       <div class="legenda" id="legenda"></div>
     </div>
     <div class="tempo">
-      <button type="button" id="play" aria-label="Animar de 2022 a 2026">▶</button>
-      <span>2022</span>
-      <input type="range" id="t" min="0" max="1000" value="1000" aria-label="Linha do tempo de 2022 a 2026">
-      <span>2026</span>
+      <button type="button" id="play" aria-label="Animar a transição">▶</button>
+      <span>1º turno</span>
+      <input type="range" id="t" min="0" max="1000" value="1000" aria-label="Linha do tempo da comparação">
+      <span>2º turno</span>
       <output id="t-rot" for="t">2026</output>
     </div>
   </section>
@@ -113,12 +120,13 @@
 <dialog id="metodo" aria-labelledby="h-met">
   <h2 id="h-met">Fontes e método</h2>
   <ul>
-    <li><strong>Votos:</strong> TSE, dados abertos do 2º turno presidencial de 2022 e 2026 por município (sem exterior). Empate conta como sem vencedor e não como virada.</li>
+    <li><strong>Votos:</strong> TSE, dados abertos da eleição presidencial por município (sem exterior): 1º e 2º turno de 2026 e 2º turno de 2022. Empate conta como sem vencedor e não como virada.</li>
     <li><strong>Malha:</strong> IBGE, malha municipal 2022; contornos estaduais pela união dos municípios.</li>
-    <li><strong>Margem</strong> = (votos 13 − votos 22) ÷ votos válidos. <strong>Virou</strong> = o vencedor mudou entre 2022 e 2026.</li>
+    <li><strong>Margem</strong> = (votos 13 − votos 22) ÷ votos válidos. No 1º turno a conta é só entre 13 e 22: os outros candidatos ficam de fora (nenhum deles liderou em município algum).</li>
+    <li><strong>Virou</strong> = o líder entre 13 e 22 no 1º turno não venceu o 2º turno (comparação padrão) ou o vencedor do 2º turno mudou de 2022 para 2026 (comparação "2022 → 2026").</li>
     <li><strong>Faixas do mapa:</strong> margem até 10, 25, 45 e acima de 45 pontos.</li>
-    <li><strong>Linha do tempo:</strong> entre os dois anos o mapa interpola a margem de cada município; os pontos intermediários são transição visual, não resultado de eleição.</li>
-    <li><strong>Ranking:</strong> soma ponderada e PROMETHEE II, calculados no notebook do projeto. Critérios e pesos:</li>
+    <li><strong>Linha do tempo:</strong> entre os dois momentos o mapa interpola a margem de cada município; os pontos intermediários são transição visual, não resultado de eleição.</li>
+    <li><strong>Ranking:</strong> soma ponderada e PROMETHEE II, calculados no notebook do projeto. Não muda com a comparação escolhida: o critério "virou" do ranking é de 2022 para 2026. Critérios e pesos:</li>
   </ul>
   <div id="criterios"></div>
   <p class="nota">ISDEL: índice da Atividade 3 (Educação, Densidade Empresarial, Tecido Empresarial e Gestão Pública), só para SP.</p>
@@ -126,6 +134,6 @@
   <form method="dialog"><button type="submit">Fechar</button></form>
 </dialog>
 
-<script type="module" src="app.js?v=5"></script>
+<script type="module" src="app.js?v=6"></script>
 </body>
 </html>
